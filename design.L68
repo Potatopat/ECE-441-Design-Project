@@ -1,0 +1,135 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.12.29
+Created On: 11/17/2017 12:54:48 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :  Patrick Bartman's Design Project
+00000000                             3  * Written by :  Patrick Bartman
+00000000                             4  * Date       :  11/30/2017
+00000000                             5  * Description:  
+00000000                             6  *-----------------------------------------------------------
+00001000                             7      ORG    $1000
+00001000                             8  START:                  ; first instruction of program
+00001000                             9  
+00001000                            10  * Put program code here
+00001000                            11  
+00001000  4280                      12      CLR.L   D0
+00001002  4281                      13      CLR.L   D1
+00001004                            14      
+00001004                            15  * see http://www.easy68k.com/QuickStart/Hello%20World%20Program%203.txt
+00001004                            16  
+00001004                            17  LOOP:
+00001004  43F9 0000107E             18      LEA     MONITOR,A1  ; gives command prompt
+0000100A  103C 000E                 19      MOVE.B  #14,D0      ; stores result in D0
+0000100E  4E4F                      20      TRAP    #15
+00001010                            21      
+00001010                            22  INPUT:
+00001010  43F9 0000108B             23      LEA     BUFFER,A1   ; TODO: need to increment buffer if trying to store, or clear if not
+00001016  103C 0002                 24      MOVE.B  #2,D0       ; trap task 2 does the following:
+0000101A  4E4F                      25      TRAP    #15         ; read a string from the keyboard into A1 of length stored at D1.W
+0000101C  2242                      26      MOVEA.L D2,A1
+0000101E  B27C 0000                 27      CMP.W   #0,D1       ; compares D1 to the number 0 to see if not empty
+00001022  6700 0050                 28      BEQ     DONE        ; branch DONE if they are equal
+00001026                            29      
+00001026  6000 002A                 30      BRA COMMAND
+0000102A                            31      
+0000102A                            32  * do code to determine what to do next here
+0000102A                            33      
+0000102A                            34  COMMAND_LOOP:
+0000102A  5204                      35      ADD.B #1,D4
+0000102C  121C                      36      MOVE.B (A4)+,D1
+0000102E  141B                      37      MOVE.B (A3)+,D2
+00001030  B23C 0000                 38      CMP.B #0,D1
+00001034  6700 0016                 39      BEQ COMMAND_CHECK_SECOND
+00001038  B43C 0000                 40      CMP.B #0,D2
+0000103C  6700 0014                 41      BEQ COMMAND
+00001040  B401                      42      CMP.B D1,D2
+00001042  67C0                      43      BEQ LOOP
+00001044  6600 000C                 44      BNE COMMAND
+00001048                            45      
+00001048                            46  COMMAND_EQUAL:
+00001048  6000 0018                 47      BRA HELP
+0000104C                            48      
+0000104C                            49  COMMAND_CHECK_SECOND:
+0000104C  B43C 0000                 50      CMP.B #0,D2
+00001050  67F6                      51      BEQ COMMAND_EQUAL
+00001052                            52  
+00001052                            53  COMMAND:
+00001052  47F9 000011A3             54      LEA HELP_COMP,A3
+00001058  2849                      55      MOVEA.L A1,A4
+0000105A  183C 0000                 56      MOVE.B #0,D4
+0000105E  60CA                      57      BRA COMMAND_LOOP
+00001060                            58      
+00001060                            59      
+00001060                            60      
+00001060                            61      
+00001060                            62  RETURN:
+00001060                            63      ;MOVE.B  #14,D0      ; go back to monitor
+00001060                            64      ;TRAP    #15
+00001060  60A2                      65      BRA     LOOP
+00001062                            66  
+00001062                            67  HELP:
+00001062  43F9 000010DB             68      LEA     HELPTEXT,A1
+00001068  103C 000E                 69      MOVE.B  #14,D0
+0000106C  4E4F                      70      TRAP    #15
+0000106E  60F0                      71      BRA     RETURN
+00001070                            72  
+00001070                            73  EXIT:
+00001070  6000 0002                 74      BRA     DONE
+00001074                            75  
+00001074                            76  DONE:
+00001074  103C 0009                 77      MOVE.B  #9,D0
+00001078  4E4F                      78      TRAP    #15         ; halt simulator
+0000107A                            79      
+0000107A                            80      
+0000107A                            81  
+0000107A  FFFF FFFF                 82      SIMHALT             ; halt simulator
+0000107E                            83  
+0000107E                            84  * Put variables and constants here
+0000107E                            85  
+0000107E= 4D 4F 4E 49 54 4F ...     86  MONITOR     DC.B    'MONITOR441> ',0                        ; command prompt input message
+0000108B                            87  BUFFER      DS.B    80                                      ; input string storage          ; 103F      ; TODO: find out if 80 is length of buffer, or what else it could be
+000010DB  =0000000D                 88  CR          EQU     $0D                                     ; ascii code for carriage return
+000010DB  =0000000A                 89  LF          EQU     $0A                                     ; ascii code for line feed
+000010DB= 4D 44 53 50 09 4D ...     90  HELPTEXT    DC.B    'MDSP   Memory Display',CR,LF           ; ascii string with new line
+000010F0= 53 4F 52 54 57 09 ...     91              DC.B    'SORTW  Sort',CR,LF
+000010FC= 4D 4D 09 09 4D 65 ...     92              DC.B    'MM     Memory Modify',CR,LF
+0000110F= 4D 53 09 09 4D 65 ...     93              DC.B    'MS     Memory Set',CR,LF
+0000111F= 42 46 09 09 42 6C ...     94              DC.B    'BF     Block Fill',CR,LF
+0000112F= 42 4D 4F 56 09 42 ...     95              DC.B    'BMOV   Block Move',CR,LF
+00001140= 42 53 43 48 09 42 ...     96              DC.B    'BSCH   Block Test',CR,LF
+00001151= 47 4F 09 09 45 78 ...     97              DC.B    'GO     Execute Program',CR,LF
+00001166= 44 46 09 09 44 69 ...     98              DC.B    'DF     Display Formatted Registers',CR,LF
+00001187= 45 58 49 54 09 45 ...     99              DC.B    'EXIT   Exit Monitor Program',CR,LF
+000011A2= 00                       100              DC.B    '',0
+000011A3= 48 45 4C 50 00           101  HELP_COMP   DC.B    'HELP',0
+000011A8= 45 58 49 54 00           102  EXIT_COMP   DC.B    'EXIT',0
+000011AD                           103  
+000011AD                           104  
+000011AD                           105      END    START        ; last line of source
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+BUFFER              108B
+COMMAND             1052
+COMMAND_CHECK_SECOND  104C
+COMMAND_EQUAL       1048
+COMMAND_LOOP        102A
+CR                  D
+DONE                1074
+EXIT                1070
+EXIT_COMP           11A8
+HELP                1062
+HELPTEXT            10DB
+HELP_COMP           11A3
+INPUT               1010
+LF                  A
+LOOP                1004
+MONITOR             107E
+RETURN              1060
+START               1000

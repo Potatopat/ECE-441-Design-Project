@@ -14,7 +14,7 @@ START:                  ; first instruction of program
     
 * see http://www.easy68k.com/QuickStart/Hello%20World%20Program%203.txt
 
-LOOP
+LOOP:
 	LEA     MONITOR,A1  ; gives command prompt
 	MOVE.B  #14,D0      ; stores result in D0
 	TRAP    #15
@@ -29,12 +29,28 @@ INPUT:
     
 * do code to determine what to do next here
 
+* PSUEDOCODE:	
+* check if text in ?buffer? is equal to possible commands one by one
+* see http://freesource-codes.blogspot.com/2011/11/string-comparision-in-assembly-language.html
+* will be super long, but entirely copy-paste
+	
+	
+	
+	
 RETURN:
     ;MOVE.B  #14,D0      ; go back to monitor
     ;TRAP    #15
     BRA     LOOP
-    
-    
+
+HELP:
+	LEA		HELPTEXT,A1
+	MOVE.B	#14,D0
+	TRAP	#15
+	BRA		RETURN
+
+EXIT:
+	BRA		DONE
+
 DONE:
     MOVE.B  #9,D0
     TRAP    #15         ; halt simulator
@@ -45,10 +61,27 @@ DONE:
 
 * Put variables and constants here
 
-MONITOR DC.B    'MONITOR441> ',0        ; command prompt input message
-BUFFER  DS.B    80                      ; input string storage          ; 103F      ; TODO: find out if 80 is length of buffer, or what else it could be
+MONITOR 	DC.B    'MONITOR441> ',0        				; command prompt input message
+BUFFER  	DS.B    80                      				; input string storage          ; 103F      ; TODO: find out if 80 is length of buffer, or what else it could be
+CR			EQU		$0D										; ascii code for carriage return
+LF			EQU		$0A										; ascii code for line feed
+HELPTEXT	DC.B	'MDSP	Memory Display',CR,LF			; ascii string with new line
+			DC.B	'SORTW	Sort',CR,LF
+			DC.B	'MM		Memory Modify',CR,LF
+			DC.B	'MS		Memory Set',CR,LF
+			DC.B	'BF		Block Fill',CR,LF
+			DC.B	'BMOV	Block Move',CR,LF
+			DC.B	'BSCH	Block Test',CR,LF
+			DC.B	'GO		Execute Program',CR,LF
+			DC.B	'DF		Display Formatted Registers',CR,LF
+			DC.B	'EXIT	Exit Monitor Program',CR,LF
+			DC.B	'',0
+HELP_COMP	DC.B	'HELP',0
+EXIT_COMP	DC.B	'EXIT',0
+
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~
