@@ -43,10 +43,14 @@ RETURN:
     BRA     LOOP
 
 HELP:
-	LEA		HELPTEXT,A1
-	MOVE.B	#14,D0
+	LEA		HELPTEXT,A1	; load helptext into a1
+	MOVE.B	#14,D0		; display text
 	TRAP	#15
 	BRA		RETURN
+	
+GO:
+	* load branching address into A7 *
+	BRA A7				; branch to location to run that program
 
 EXIT:
 	BRA		DONE
@@ -81,6 +85,7 @@ EXIT_COMP	DC.B	'EXIT',0
 
 
     END    START        ; last line of source
+
 
 
 *~Font name~Courier New~
