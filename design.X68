@@ -49,7 +49,7 @@ HELP:
 	BRA		RETURN
 	
 GO:
-	* load branching address into A7 *
+	* TODOL load branching address into A7 during string parsing *
 	BRA A7				; branch to location to run that program
 
 EXIT:
