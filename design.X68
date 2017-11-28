@@ -82,9 +82,11 @@ HELPTEXT	DC.B	'MDSP	Memory Display',CR,LF			; ascii string with new line
 			DC.B	'',0
 HELP_COMP	DC.B	'HELP',0
 EXIT_COMP	DC.B	'EXIT',0
+Q_MARK      DC.B    '? ',0
 
 
     END    START        ; last line of source
+
 
 
 
