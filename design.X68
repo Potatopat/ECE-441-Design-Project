@@ -11,6 +11,12 @@ START:                  ; first instruction of program
 
     CLR.L   D0
     CLR.L   D1
+    CLR.L   D2
+    CLR.L   D3
+    CLR.L   D4
+    CLR.L   D5
+    CLR.L   D6
+    CLR.L   D7
     
 * see http://www.easy68k.com/QuickStart/Hello%20World%20Program%203.txt
 
@@ -111,6 +117,7 @@ Q_MARK      DC.B    '? ',0
 
 
     END    START        ; last line of source
+
 
 
 
