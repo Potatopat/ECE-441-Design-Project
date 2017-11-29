@@ -49,8 +49,22 @@ HELP:
 	BRA		RETURN
 	
 GO:
-	* TODOL load branching address into A7 during string parsing *
-	BRA A7				; branch to location to run that program
+	* TODO: load branching address into A7 during string parsing
+	* TODO: make sure it is valid memory address via BGE, BLE, etc.
+	
+	* INPUT   EQU $2C60
+	* COM_BUFF    EQU $2C10
+	* OUT_BUFF    EQU $2BC0
+	* ...
+    * GO
+    * LEA     INPUT, A5
+    * ADD     #$03, A5
+    * JSR     GET_ARG
+    * LEA     OUT_BUFF, A1
+    * MOVE.L  D7, A1
+    * JMP     (A1)
+    
+	JSR (A7)			; branch to location to run that program
 
 EXIT:
 	BRA		DONE
@@ -80,12 +94,24 @@ HELPTEXT	DC.B	'MDSP	Memory Display',CR,LF			; ascii string with new line
 			DC.B	'DF		Display Formatted Registers',CR,LF
 			DC.B	'EXIT	Exit Monitor Program',CR,LF
 			DC.B	'',0
+CMD_TBL     DC.B    'HELP ',0
+            DC.B    'MDSP ',0
+            DC.B    'SORTW ',0
+            DC.B    'MM ',0
+            DC.B    'MS ',0
+            DC.B    'BF ',0
+            DC.B    'BMOV ',0
+            DC.B    'BTST ',0
+            DC.B    'BSCH ',0
+            DC.B    'GO ',0
+            DC.B    'DF ',0
 HELP_COMP	DC.B	'HELP',0
 EXIT_COMP	DC.B	'EXIT',0
 Q_MARK      DC.B    '? ',0
 
 
     END    START        ; last line of source
+
 
 
 
