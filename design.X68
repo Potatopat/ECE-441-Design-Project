@@ -293,8 +293,29 @@ DONE_FILL:
     TRAP    #15
     JMP     PROMPT
 
-
 BMOV:
+    LEA     BUFFER,A5
+    ADD     #05,A5
+    JSR     GET_ARG
+    MOVE.L  D7,A2
+    ADD     #01,A5
+    JSR     GET_ARG
+    MOVE.L  D7,A3
+    ADD     #01,A5
+    JSR     GET_ARG
+    MOVE.L  D7,A4
+MOVE_MEM:
+    CMPA    A3,A2
+    BGE     DONE_MOVE
+    MOVE.W  (A2)+,(A4)+
+    BRA     MOVE_MEM
+    
+DONE_MOVE
+    MOVE.B  #NULL,D1
+    MOVE.B  #0,D0
+    TRAP    #15
+    JMP     RETURN
+
 
 BTST:
     LEA     OUTPUT, A2
@@ -357,6 +378,22 @@ GO:
     
 DF:
     JSR     REG
+    
+    BRA     RETURN
+    
+    
+RESET:
+    MOVE.L  #NULL,A2
+    MOVE.L  #$00000FFF,A3
+    MOVE.L  #$FFFFFFFF,D7
+    
+    JMP     FILL_MEM
+    
+    MOVE.L  #$FFFFFFFF,D7
+    MOVE.L  #$2000,A2
+    MOVE.L  #$3000,A3
+    
+    JMP     FILL_MEM
     
     BRA     RETURN
 
@@ -511,7 +548,7 @@ LESS_SR:
     JMP     PROMPT
 
 
-SWAP
+SWAP:
     LEA     INPUT,A5
     ADD     #05,A5
     JSR     GET_ARG
@@ -528,20 +565,20 @@ SWAP
     BEQ     SWAP_LONG
     JMP     ARG_ERR_STR
     
-SWAP_BYTE
+SWAP_BYTE:
     MOVE.B  (A2),D1
     MOVE.B  (A3),(A2)
     MOVE.B  D1,(A3)
     BRA     RETURN
-SWAP_WORD
+SWAP_WORD:
     MOVE.W  (A2),D1
     MOVE.W  (A3),(A2)
     MOVE.W  D1,(A3)
     BRA     RETURN
-SWAP_LONG
-    MOVE.L  (A2), D1
-    MOVE.L  (A3), (A2)
-    MOVE.L  D1, (A3)
+SWAP_LONG:
+    MOVE.L  (A2),D1
+    MOVE.L  (A3),(A2)
+    MOVE.L  D1,(A3)
     BRA     RETURN
 
 
@@ -570,6 +607,7 @@ CMD_TBL     DC.B    'HELP ',0
             DC.B    'BSCH ',0
             DC.B    'GO ',0
             DC.B    'DF ',0
+            DC.B    'RESET ',0
 CMD_ADDR    DC.L    HELP
             DC.L    MDSP
             DC.L    SORTW
@@ -582,6 +620,7 @@ CMD_ADDR    DC.L    HELP
             DC.L    BSCH
             DC.L    GO
             DC.L    DF
+            DC.L    RESET
             DC.L    EXIT
 HELPTEXT	DC.B	'MDSP	   Memory Display',CR,LF		; ascii string with new line
 			DC.B	'SORTW       Sort',CR,LF
@@ -593,7 +632,8 @@ HELPTEXT	DC.B	'MDSP	   Memory Display',CR,LF		; ascii string with new line
 			DC.B	'GO		Execute Program (GO $ADDRESS)',CR,LF
 			DC.B	'DF		Display Formatted Registers',CR,LF
 			DC.B	'SWAP	   Swap the data of two registers with length (SWAP $ONE $TWO;B/W/L)',CR,LF
-			DC.B	'EXIT	   Exit Monitor Program',CR,LF
+			DC.B    'RESET      Clears nonoperative registers to origional state',CR,LF
+            DC.B	'EXIT	   Exit Monitor Program',CR,LF
 			DC.B	'',0
 HELP_COMP	DC.B	'HELP',0
 EXIT_COMP	DC.B	'EXIT',0
@@ -627,20 +667,7 @@ MEM_ERR_STR DC.B    'ERROR IN MEMORY AT: ',0
 SR_STR      DC.B	'SR=',0
 GOOD        DC.B    'NO ERROR DETECTED',LF,CR,0
 
-        
-
-
-
-
     END    START        ; last line of source
-
-
-
-
-
-
-
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
