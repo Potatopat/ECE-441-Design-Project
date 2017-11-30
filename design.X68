@@ -100,22 +100,17 @@ NEXT_LOOP:
 GET_ARG:
     CMPI.B  #HEX,(A5)       ; checks to make sure that has a hex number as address
     ;BNE     HEX_ERROR
-    MOVE    $0000, D7
-    MOVE    $0000, D6
+    MOVE    $0000,D7
+    MOVE    $0000,D6
     
 GET_ARG_LOOP:
     ADD     #$01,A5
     ROL.L   #4,D7
     ADD.L   D6,D7
     MOVE.B  (A5)+,D6
-    ;CMPI.B  #$29,D6         ; check if less than 0
-    ;BLE     ARG_ERROR       ; not valid if so
     CMPI.B  #$39,D6         ; if number less than 9
     BLE     DIGIT           ; easy, continue to next step
     SUBQ.B  #$07,D6         ; subtract $7 to make A=$3A, .., F=$3F
-    ;CMPI.B  #$3F,D6         ; check if between A and F
-    ;BLE     DIGIT           ; valid
-    ;BRA     ARG_ERROR       ; can't be valid
     
 DIGIT:
     SUB.B   #ZERO,D6
@@ -209,19 +204,18 @@ DISP_ADDR       ;PRINT OUT THE VALUE OF A2 (USEFUL FOR MDSP AND MCHG)
     MOVE.L  A2, D0
     LEA     OUTPUT, A1
     MOVE.W  #8, D2
-DSP_ADR_LP
+DISP_ADDR_2
     ROL.L   #4, D0
     MOVE.L  D0, D3
     AND.L   #$0F, D3
     CMPI.B  #$09, D3
-    BLE     LESS_ADDR
+    BLE     DISP_ADDR_3
     ADD     #$07, D3
-LESS_ADDR
+DISP_ADDR_3
     ADD     #$30, D3
     MOVE.B  D3, (A1)+
     SUBQ.W  #1, D2
-    BNE     DSP_ADR_LP
-    
+    BNE     DISP_ADDR_2
     MOVE.B  #NULL, (A1)+
     LEA     OUTPUT, A1
     MOVE.B  #14, D0
@@ -241,12 +235,10 @@ MM:
     MOVE.L  D7,A2
 MOD_LOOP:
 	LEA     OUTPUT, A1
-	
     JSR     DISP_ADDR
-
     MOVE.B  #2,D0
     TRAP    #15
-    LEA		OUTPUT, A1
+    LEA		OUTPUT,A1
     CMPI.B	#$2E,(A1)
     BEQ		DONE_MOD
     CMPI.B	#2,D1
@@ -330,25 +322,24 @@ BTST:
 WRITE_TEST
     CMPA    A2, A3
     BLT     DONE_WRITE
-    MOVE.W  #$A5A5, (A2)+
+    MOVE.W  #$AAAA, (A2)+
     BRA     WRITE_TEST
 DONE_WRITE
     MOVE.L  A5, A2
 READ_TEST
-    CMP.W   #$A5A5, (A2)
+    CMP.W   #$AAAA, (A2)
     BNE     MEM_ERR
-    MOVE.W  #$5A5A, (A2)+
+    MOVE.W  #$AAAA, (A2)+
     CMPA    A2, A3
     BGT     READ_TEST
     
     MOVE.L  A5, A2
-FINAL_TEST
-    CMP.W   #$5A5A, (A2)
+TEST
+    CMP.W   #$AAAA, (A2)
     BNE     MEM_ERR
     MOVE.W  #$0000, (A2)+
     CMPA    A2, A3
-    BGT     FINAL_TEST
-    
+    BGT     TEST
     LEA     GOOD, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -364,12 +355,9 @@ MEM_ERR
 
 BSCH:
 
-GO:
-	* TODO: load branching address into A7 during string parsing
-	* TODO: make sure it is valid memory address via BGE, BLE, etc.
-	
+GO:	
     LEA     BUFFER,A5
-    ADD     #$03,A5       ; why #$03 (End-Of-Text)
+    ADD     #$03,A5
     JSR     GET_ARG
     LEA     OUTPUT,A1
     MOVE.L  D7,A1       ; moves GO's arg into A7
@@ -394,6 +382,15 @@ RESET:
     MOVE.L  #$3000,A3
     
     JMP     FILL_MEM
+    
+    CLR.L   D0
+    CLR.L   D1
+    CLR.L   D2
+    CLR.L   D3
+    CLR.L   D4
+    CLR.L   D5
+    CLR.L   D6
+    CLR.L   D7
     
     BRA     RETURN
 
@@ -582,6 +579,12 @@ SWAP_LONG:
     BRA     RETURN
 
 
+DIVZ:
+    CLR.L   D0
+    CLR.L   D1
+    DIVU    D0,D1
+    BRA RETURN
+
     
     
 
@@ -608,6 +611,7 @@ CMD_TBL     DC.B    'HELP ',0
             DC.B    'GO ',0
             DC.B    'DF ',0
             DC.B    'RESET ',0
+            DC.B    'DIVZ ',0
 CMD_ADDR    DC.L    HELP
             DC.L    MDSP
             DC.L    SORTW
@@ -622,18 +626,20 @@ CMD_ADDR    DC.L    HELP
             DC.L    DF
             DC.L    RESET
             DC.L    EXIT
-HELPTEXT	DC.B	'MDSP	   Memory Display',CR,LF		; ascii string with new line
-			DC.B	'SORTW       Sort',CR,LF
-			DC.B	'MM		Memory Modify',CR,LF
-			DC.B	'MS		Memory Set',CR,LF
+            DC.L    DIVZ
+HELPTEXT	DC.B	'MDSP	   Memory Display (MDSP $ONE $TWO) or (MDSP $ONE)',CR,LF		; ascii string with new line
+			DC.B	'SORTW       Sort (SORT $START $END)',CR,LF
+			DC.B	'MM		Memory Modify (MM $ADDRESS) then ($DATA) until (.)',CR,LF
+			DC.B	'MS		Memory Set (MS $ADDRESS DATA)',CR,LF
 			DC.B	'BF		Block Fill (BF $START $END ####)',CR,LF
-			DC.B	'BMOV	   Block Move',CR,LF
-			DC.B	'BSCH	   Block Test',CR,LF
+			DC.B	'BMOV	   Block Move (BMOV $ONE $TWO)',CR,LF
+			DC.B	'BTST	   Block Test (BTST $ONE TWO)',CR,LF
+			DC.B    'BSCH      Block Search (BSCH $ONE TWO)',CR,LF
 			DC.B	'GO		Execute Program (GO $ADDRESS)',CR,LF
-			DC.B	'DF		Display Formatted Registers',CR,LF
+			DC.B	'DF		Display Formatted Registers (DF)',CR,LF
 			DC.B	'SWAP	   Swap the data of two registers with length (SWAP $ONE $TWO;B/W/L)',CR,LF
-			DC.B    'RESET      Clears nonoperative registers to origional state',CR,LF
-            DC.B	'EXIT	   Exit Monitor Program',CR,LF
+			DC.B    'RESET      Clears nonoperative registers to origional state (RESET )',CR,LF
+            DC.B	'EXIT	   Exit Monitor Program (EXIT)',CR,LF
 			DC.B	'',0
 HELP_COMP	DC.B	'HELP',0
 EXIT_COMP	DC.B	'EXIT',0
