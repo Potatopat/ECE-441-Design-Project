@@ -1,6 +1,6 @@
 00001000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.12.29
-Created On: 11/30/2017 10:39:47 AM
+Created On: 11/30/2017 12:53:12 PM
 
 00000000                             1  *-----------------------------------------------------------
 00000000                             2  * Title      :  Patrick Bartman's Design Project
@@ -26,198 +26,265 @@ Created On: 11/30/2017 10:39:47 AM
 00001010                            22  
 00001010                            23  INIT:
 00001010                            24      * Do eception vector table here *
-00001010                            25      * MOVE.L #STACK, $0 ; etc.
+00001010                            25      *MOVE.L #STACK, $0
 00001010                            26  
-00001010                            27  PROMPT:
-00001010  43F9 00001100             28      LEA     MONITOR,A1  ; gives command prompt
-00001016  103C 000E                 29      MOVE.B  #14,D0      ; stores result in D0
-0000101A  4E4F                      30      TRAP    #15
-0000101C                            31      
-0000101C                            32  INPUT:
-0000101C  43F9 00002100             33      LEA     BUFFER,A1
-00001022  103C 0002                 34      MOVE.B  #2,D0       ; trap task 2 does the following:
-00001026  4E4F                      35      TRAP    #15         ; read a string from the keyboard into A1 of length stored at D1.W
-00001028  B27C 0000                 36      CMP.W   #0,D1       ; compares D1 to the number 0 to see if not empty
-0000102C  6700 00A8                 37      BEQ     EMPTY       ; branch EMPTY if they are equal
-00001030                            38      
-00001030                            39  PARSE:
-00001030  43F9 00002100             40      LEA     BUFFER,A1
-00001036  143C 0020                 41      MOVE.B  #SPACE,D2
-0000103A                            42      
-0000103A                            43  CLR_SPC:                ; don't think i need??
-0000103A                            44      ;CMP.B (A1), D2
-0000103A                            45      ;ADD #$01, A1
-0000103A                            46      ;BEQ CLR_SPC
-0000103A                            47      
-0000103A  7200                      48      MOVEQ   #0, D1
-0000103C                            49      ;SUB #$01, A1
-0000103C                            50      
-0000103C  45F9 00002200             51      LEA     CMD_BUFFER,A2
-00001042                            52  
-00001042                            53  COPY_CMD:
-00001042  34D9                      54      MOVE    (A1)+,(A2)+
-00001044  5241                      55      ADDI    #1,D1
-00001046  0C41 0008                 56      CMPI    #8,D1
-0000104A  6C00 009A                 57      BGE     CMD_ERROR
-0000104E  0C11 0020                 58      CMPI.B  #SPACE,(A1)
-00001052  6700 000C                 59      BEQ     GET_CMD
-00001056  0C11 0000                 60      CMPI.B  #NULL,(A1)
-0000105A  6700 0004                 61      BEQ     GET_CMD
-0000105E  60E2                      62      BRA     COPY_CMD
-00001060                            63      
-00001060                            64  GET_CMD:
-00001060  14BC 0020                 65      MOVE.B  #SPACE,(A2)
-00001064  43F9 000011E7             66      LEA     CMD_TBL,A1
-0000106A  45F9 00002200             67      LEA     CMD_BUFFER,A2
-00001070  47F9 00001220             68      LEA     CMD_ADDR,A3
-00001076                            69  
-00001076                            70  GET_CMD_LOOP:
-00001076  B30A                      71      CMPM.B  (A2)+,(A1)+
-00001078  6600 0014                 72      BNE     NEXT
-0000107C  0C12 0020                 73      CMPI.B  #SPACE,(A2)
-00001080  66F4                      74      BNE     GET_CMD_LOOP
-00001082  0C11 0020                 75      CMPI.B  #SPACE,(A1)
-00001086  6600 005E                 76      BNE     CMD_ERROR
-0000108A  2853                      77      MOVE.L  (A3),A4         ; command found     ; TODO: find out what's in (A4)
-0000108C  4ED4                      78      JMP     (A4)            ; run command
-0000108E                            79      
-0000108E                            80  NEXT:
-0000108E  45F9 00002200             81      LEA     CMD_BUFFER,A2
-00001094                            82  
-00001094                            83  NEXT_LOOP:
-00001094  0C19 0000                 84      CMPI.B  #NULL,(A1)+
-00001098  66FA                      85      BNE     NEXT_LOOP
-0000109A                            86      ;ADD     #EOT,A3        ; TODO: don't think I need, but find out
-0000109A  B2FC 10CE                 87      CMPA    #EXIT,A1
-0000109E  6E00 0046                 88      BGT     CMD_ERROR
-000010A2  4EF8 1076                 89      JMP     GET_CMD_LOOP
-000010A6                            90      
-000010A6                            91  GET_ARG:
-000010A6  0C15 0024                 92      CMPI.B  #HEX,(A5)
-000010AA                            93  
-000010AA                            94  * PSUEDOCODE:   
-000010AA                            95  * check if text in ?buffer? is equal to possible commands one by one
-000010AA                            96  * see http://freesource-codes.blogspot.com/2011/11/string-comparision-in-assembly-language.html
-000010AA                            97  * will be super long, but entirely copy-paste
-000010AA                            98  
-000010AA                            99  
-000010AA                           100  HELP:
-000010AA  43F9 0000110D            101      LEA     HELPTEXT,A1 ; load helptext into a1
-000010B0  103C 000E                102      MOVE.B  #14,D0      ; display text
-000010B4  4E4F                     103      TRAP    #15
-000010B6  6000 001A                104      BRA     RETURN
-000010BA                           105      
-000010BA                           106  MDSP:
-000010BA                           107  
-000010BA                           108  SORTW:
-000010BA                           109  
-000010BA                           110  MM:
-000010BA                           111  
-000010BA                           112  MS:
-000010BA                           113  
-000010BA                           114  BF:
-000010BA                           115  
-000010BA                           116  BMOV:
-000010BA                           117  
-000010BA                           118  BTST:
-000010BA                           119  
-000010BA                           120  BSCH:
-000010BA                           121  
-000010BA                           122  GO:
-000010BA                           123      * TODO: load branching address into A7 during string parsing
-000010BA                           124      * TODO: make sure it is valid memory address via BGE, BLE, etc.
-000010BA                           125      
-000010BA  4DF9 00002100            126      LEA     BUFFER,A6
-000010C0                           127      ;ADD     #$03,A6       ; why #$03 (End-Of-Text)
-000010C0  4EB8 10A6                128      JSR     GET_ARG
-000010C4  4FF9 00002300            129      LEA     OUTPUT,A7
-000010CA  2E47                     130      MOVE.L  D7,A7       ; moves GO's arg into A7
-000010CC  4ED7                     131      JMP     (A7)        ; branch to location to run that program
-000010CE                           132      
-000010CE                           133  DF:
-000010CE                           134  
-000010CE                           135  EXIT:
-000010CE  6000 0026                136      BRA     DONE
-000010D2                           137      
-000010D2                           138  RETURN:
-000010D2                           139      ;MOVE.B  #14,D0      ; go back to monitor
-000010D2                           140      ;TRAP    #15
-000010D2  6000 FF3C                141      BRA     PROMPT
-000010D6                           142  
-000010D6                           143  EMPTY:
-000010D6  43F9 0000125D            144      LEA     EMPTY_STR,A1    ; loads EMPTY_STR into A1
-000010DC  103C 000E                145      MOVE.B  #14,D0          ; display text
-000010E0  4E4F                     146      TRAP    #15
-000010E2  6000 0012                147      BRA     DONE            ; TODO: Maybe not branch to done?
-000010E6                           148      
-000010E6                           149  CMD_ERROR:
-000010E6  43F9 00001275            150      LEA     CMD_ERR_STR,A1  ; loads CMD_ERR_STR into A1
-000010EC  103C 000E                151      MOVE.B  #14,D0          ; display text
-000010F0  4E4F                     152      TRAP    #15
-000010F2  6000 0002                153      BRA     DONE
-000010F6                           154      
-000010F6                           155  DONE:
-000010F6  103C 0009                156      MOVE.B  #9,D0
-000010FA  4E4F                     157      TRAP    #15         ; halt simulator
-000010FC                           158      
-000010FC                           159      
-000010FC                           160  
-000010FC  FFFF FFFF                161      SIMHALT             ; halt simulator
-00001100                           162  
-00001100                           163  * Put variables and constants here
-00001100                           164  
-00001100= 4D 4F 4E 49 54 4F ...    165  MONITOR     DC.B    'MONITOR441> ',0                        ; command prompt input message
-0000110D  =00002100                166  BUFFER      EQU     $2100                                   ; input string storage
-0000110D  =00002200                167  CMD_BUFFER  EQU     $2200
-0000110D  =00002300                168  OUTPUT      EQU     $2300
-0000110D  =0000000D                169  CR          EQU     $0D                                     ; ascii code for carriage return
-0000110D  =0000000A                170  LF          EQU     $0A                                     ; ascii code for line feed
-0000110D= 4D 44 53 50 09 20 ...    171  HELPTEXT    DC.B    'MDSP      Memory Display',CR,LF        ; ascii string with new line
-00001125= 53 4F 52 54 57 20 ...    172              DC.B    'SORTW       Sort',CR,LF
-00001137= 4D 4D 09 09 4D 65 ...    173              DC.B    'MM     Memory Modify',CR,LF
-0000114A= 4D 53 09 09 4D 65 ...    174              DC.B    'MS     Memory Set',CR,LF
-0000115A= 42 46 09 09 42 6C ...    175              DC.B    'BF     Block Fill',CR,LF
-0000116A= 42 4D 4F 56 09 20 ...    176              DC.B    'BMOV      Block Move',CR,LF
-0000117E= 42 53 43 48 09 20 ...    177              DC.B    'BSCH      Block Test',CR,LF
-00001192= 47 4F 09 09 45 78 ...    178              DC.B    'GO     Execute Program',CR,LF
-000011A7= 44 46 09 09 44 69 ...    179              DC.B    'DF     Display Formatted Registers',CR,LF
-000011C8= 45 58 49 54 09 20 ...    180              DC.B    'EXIT      Exit Monitor Program',CR,LF
-000011E6= 00                       181              DC.B    '',0
-000011E7= 48 45 4C 50 20 00        182  CMD_TBL     DC.B    'HELP ',0
-000011ED= 4D 44 53 50 20 00        183              DC.B    'MDSP ',0
-000011F3= 53 4F 52 54 57 20 00     184              DC.B    'SORTW ',0
-000011FA= 4D 4D 20 00              185              DC.B    'MM ',0
-000011FE= 4D 53 20 00              186              DC.B    'MS ',0
-00001202= 42 46 20 00              187              DC.B    'BF ',0
-00001206= 42 4D 4F 56 20 00        188              DC.B    'BMOV ',0
-0000120C= 42 54 53 54 20 00        189              DC.B    'BTST ',0
-00001212= 42 53 43 48 20 00        190              DC.B    'BSCH ',0
-00001218= 47 4F 20 00              191              DC.B    'GO ',0
-0000121C= 44 46 20 00              192              DC.B    'DF ',0
-00001220= 000010AA                 193  CMD_ADDR    DC.L    HELP
-00001224= 000010BA                 194              DC.L    MDSP
-00001228= 000010BA                 195              DC.L    SORTW
-0000122C= 000010BA                 196              DC.L    MM
-00001230= 000010BA                 197              DC.L    MS
-00001234= 000010BA                 198              DC.L    BF
-00001238= 000010BA                 199              DC.L    BMOV
-0000123C= 000010BA                 200              DC.L    BTST
-00001240= 000010BA                 201              DC.L    BSCH
-00001244= 000010BA                 202              DC.L    GO
-00001248= 000010CE                 203              DC.L    DF
-0000124C= 000010CE                 204              DC.L    EXIT
-00001250= 48 45 4C 50 00           205  HELP_COMP   DC.B    'HELP',0
-00001255= 45 58 49 54 00           206  EXIT_COMP   DC.B    'EXIT',0
-0000125A= 3F 20 00                 207  Q_MARK      DC.B    '? ',0
-0000125D= 59 4F 55 20 48 41 ...    208  EMPTY_STR   DC.B    'YOU HAD AN EMPTY STRING',0
-00001275= 4E 4F 54 20 56 41 ...    209  CMD_ERR_STR DC.B    'NOT VALID',0
-0000127F  =00000020                210  SPACE       EQU     $20
-0000127F  =00000000                211  NULL        EQU     $00
-0000127F  =00000004                212  EOT         EQU     $04
-0000127F  =00000024                213  HEX         EQU     $24
-0000127F                           214  
-0000127F                           215  
-0000127F                           216      END    START        ; last line of source
+00001010                            27  
+00001010                            28  PROMPT:
+00001010  43F9 00001164             29      LEA     MONITOR,A1  ; gives command prompt
+00001016  103C 000E                 30      MOVE.B  #14,D0      ; stores result in D0
+0000101A  4E4F                      31      TRAP    #15
+0000101C                            32      
+0000101C                            33  INPUT:
+0000101C  43F9 00002100             34      LEA     BUFFER,A1
+00001022  103C 0002                 35      MOVE.B  #2,D0       ; trap task 2 does the following:
+00001026  4E4F                      36      TRAP    #15         ; read a string from the keyboard into A1 of length stored at D1.W
+00001028  B27C 0000                 37      CMP.W   #0,D1       ; compares D1 to the number 0 to see if not empty
+0000102C  6700 00F4                 38      BEQ     EMPTY       ; branch EMPTY if they are equal
+00001030                            39      
+00001030                            40  PARSE:
+00001030  43F9 00002100             41      LEA     BUFFER,A1
+00001036  143C 0020                 42      MOVE.B  #SPACE,D2
+0000103A                            43      
+0000103A                            44  CLR_SPACE:                ; don't think i need??
+0000103A  B411                      45      CMP.B (A1),D2
+0000103C  5249                      46      ADD #$01,A1
+0000103E  67FA                      47      BEQ CLR_SPACE
+00001040                            48      
+00001040  7200                      49      MOVEQ   #0,D1
+00001042  5349                      50      SUB #$01,A1
+00001044                            51      
+00001044  45F9 00002200             52      LEA     CMD_BUFFER,A2
+0000104A                            53  
+0000104A                            54  COPY_CMD:
+0000104A  34D9                      55      MOVE    (A1)+,(A2)+
+0000104C  5241                      56      ADDI    #1,D1
+0000104E  0C41 0008                 57      CMPI    #8,D1
+00001052  6C00 00DC                 58      BGE     CMD_ERROR
+00001056  0C11 0020                 59      CMPI.B  #SPACE,(A1)
+0000105A  6700 000C                 60      BEQ     GET_CMD
+0000105E  0C11 0000                 61      CMPI.B  #NULL,(A1)
+00001062  6700 0004                 62      BEQ     GET_CMD
+00001066  60E2                      63      BRA     COPY_CMD
+00001068                            64      
+00001068                            65  GET_CMD:
+00001068  14BC 0020                 66      MOVE.B  #SPACE,(A2)
+0000106C  43F9 00002200             67      LEA     CMD_BUFFER,A1
+00001072  45F9 00001171             68      LEA     CMD_TBL,A2
+00001078  47F9 000011AA             69      LEA     CMD_ADDR,A3
+0000107E                            70  
+0000107E                            71  GET_CMD_LOOP:
+0000107E  B509                      72      CMPM.B  (A1)+,(A2)+
+00001080  6600 0014                 73      BNE     NEXT
+00001084  0C11 0020                 74      CMPI.B  #SPACE,(A1)
+00001088  66F4                      75      BNE     GET_CMD_LOOP
+0000108A  0C12 0020                 76      CMPI.B  #SPACE,(A2)
+0000108E  6600 00A0                 77      BNE     CMD_ERROR
+00001092  2A53                      78      MOVE.L  (A3),A5         ; command found     ; TODO: find out what's in (A5)
+00001094  4ED5                      79      JMP     (A5)            ; run command
+00001096                            80      
+00001096                            81  NEXT:
+00001096  43F9 00002200             82      LEA     CMD_BUFFER,A1
+0000109C                            83  
+0000109C                            84  NEXT_LOOP:
+0000109C  0C1A 0000                 85      CMPI.B  #NULL,(A2)+
+000010A0  66FA                      86      BNE     NEXT_LOOP
+000010A2  D6FC 0004                 87      ADD     #EOT,A3        ; TODO: don't think I need, but find out
+000010A6  B4FC 12B9                 88      CMPA    #EXIT_COMP,A2
+000010AA  6E00 0084                 89      BGT     CMD_ERROR
+000010AE  4EF8 107E                 90      JMP     GET_CMD_LOOP
+000010B2                            91      
+000010B2                            92  GET_ARG:
+000010B2  0C15 0024                 93      CMPI.B  #HEX,(A5)       ; checks to make sure that has a hex number as address
+000010B6  6600 0086                 94      BNE     HEX_ERROR
+000010BA  7E00                      95      MOVEQ   #$00, D7
+000010BC  7C00                      96      MOVEQ   #$00, D6
+000010BE                            97      
+000010BE                            98  GET_ARG_LOOP:
+000010BE  524D                      99      ADD     #$01,A5
+000010C0  E99F                     100      ROL.L   #4,D7
+000010C2  DE86                     101      ADD.L   D6,D7
+000010C4  1C1D                     102      MOVE.B  (A5)+,D6
+000010C6                           103      ;CMPI.B  #$29,D6         ; check if less than 0
+000010C6                           104      ;BLE     ARG_ERROR       ; not valid if so
+000010C6  0C06 0039                105      CMPI.B  #$39,D6         ; if number less than 9
+000010CA  6F00 0004                106      BLE     DIGIT           ; easy, continue to next step
+000010CE  5F06                     107      SUBQ.B  #$07,D6         ; subtract $7 to make A=$3A, .., F=$3F
+000010D0                           108      ;CMPI.B  #$3F,D6         ; check if between A and F
+000010D0                           109      ;BLE     DIGIT           ; valid
+000010D0                           110      ;BRA     ARG_ERROR       ; can't be valid
+000010D0                           111      
+000010D0                           112  DIGIT:
+000010D0  0406 0030                113      SUB.B   #ZERO,D6
+000010D4  0C25 0000                114      CMPI.B  #NULL,-(A5)
+000010D8  6700 0014                115      BEQ     RETURN_ARG
+000010DC  0C15 0020                116      CMPI.B  #SPACE,(A5)
+000010E0  6700 000C                117      BEQ     RETURN_ARG
+000010E4  0C15 003B                118      CMPI.B  #SEMICOLON,(A5) ; has aditional arg, return to sender and then call arg loop again
+000010E8  6700 0004                119      BEQ     RETURN_ARG
+000010EC  60D0                     120      BRA     GET_ARG_LOOP
+000010EE                           121      
+000010EE                           122  RETURN_ARG:
+000010EE  4E75                     123      RTS
+000010F0                           124      
+000010F0                           125  
+000010F0                           126  * PSUEDOCODE:   
+000010F0                           127  * check if text in ?buffer? is equal to possible commands one by one
+000010F0                           128  * see http://freesource-codes.blogspot.com/2011/11/string-comparision-in-assembly-language.html
+000010F0                           129  * will be super long, but entirely copy-paste
+000010F0                           130  
+000010F0                           131  
+000010F0                           132  HELP:
+000010F0  43F9 000011DA            133      LEA     HELPTEXT,A1 ; load helptext into a1
+000010F6  103C 000E                134      MOVE.B  #14,D0      ; display text
+000010FA  4E4F                     135      TRAP    #15
+000010FC  6000 0020                136      BRA     RETURN
+00001100                           137      
+00001100                           138  MDSP:
+00001100                           139  
+00001100                           140  SORTW:
+00001100                           141  
+00001100                           142  MM:
+00001100                           143  
+00001100                           144  MS:
+00001100                           145  
+00001100                           146  BF:
+00001100                           147  
+00001100                           148  BMOV:
+00001100                           149  
+00001100                           150  BTST:
+00001100                           151  
+00001100                           152  BSCH:
+00001100                           153  
+00001100                           154  GO:
+00001100                           155      * TODO: load branching address into A7 during string parsing
+00001100                           156      * TODO: make sure it is valid memory address via BGE, BLE, etc.
+00001100                           157      
+00001100  4BF9 00002100            158      LEA     BUFFER,A5
+00001106  564D                     159      ADD     #$03,A5       ; why #$03 (End-Of-Text)
+00001108  4EB8 10B2                160      JSR     GET_ARG
+0000110C  43F9 00002300            161      LEA     OUTPUT,A1
+00001112  2247                     162      MOVE.L  D7,A1       ; moves GO's arg into A7
+00001114  4ED1                     163      JMP     (A1)        ; branch to location to run that program
+00001116  6000 0006                164      BRA     RETURN
+0000111A                           165      
+0000111A                           166  DF:
+0000111A                           167  
+0000111A                           168  EXIT:
+0000111A  6000 003E                169      BRA     DONE
+0000111E                           170      
+0000111E                           171  RETURN:
+0000111E                           172      ;MOVE.B  #14,D0      ; go back to monitor
+0000111E                           173      ;TRAP    #15
+0000111E  6000 FEF0                174      BRA     PROMPT
+00001122                           175  
+00001122                           176  EMPTY:
+00001122  43F9 000012C1            177      LEA     EMPTY_STR,A1    ; loads EMPTY_STR into A1
+00001128  103C 000E                178      MOVE.B  #14,D0          ; display text
+0000112C  4E4F                     179      TRAP    #15
+0000112E  60EE                     180      BRA     RETURN
+00001130                           181      
+00001130                           182  CMD_ERROR:
+00001130  43F9 000012D9            183      LEA     CMD_ERR_STR,A1  ; loads CMD_ERR_STR into A1
+00001136  103C 000E                184      MOVE.B  #14,D0          ; display text
+0000113A  4E4F                     185      TRAP    #15
+0000113C  60E0                     186      BRA     RETURN
+0000113E                           187      
+0000113E                           188  HEX_ERROR:
+0000113E  43F9 000012E5            189      LEA     HEX_ERR_STR,A1  ; loads HEX_ERR_STR into A1
+00001144  103C 000E                190      MOVE.B  #14,D0          ; display text
+00001148  4E4F                     191      TRAP    #15
+0000114A  60D2                     192      BRA     RETURN
+0000114C                           193      
+0000114C                           194  ARG_ERROR:
+0000114C  43F9 0000131A            195      LEA     ARG_ERR_STR,A1  ; loads ARG_ERR_STR into A1
+00001152  103C 000E                196      MOVE.B  #14,D0          ; display text
+00001156  4E4F                     197      TRAP    #15
+00001158  60C4                     198      BRA     RETURN
+0000115A                           199  
+0000115A                           200  DONE:
+0000115A  103C 0009                201      MOVE.B  #9,D0
+0000115E  4E4F                     202      TRAP    #15         ; halt simulator
+00001160                           203      
+00001160                           204      
+00001160                           205  
+00001160  FFFF FFFF                206      SIMHALT             ; halt simulator
+00001164                           207  
+00001164                           208  * Put variables and constants here
+00001164                           209  
+00001164= 4D 4F 4E 49 54 4F ...    210  MONITOR     DC.B    'MONITOR441> ',0                        ; command prompt input message
+00001171  =00002100                211  BUFFER      EQU     $2100                                   ; input string storage
+00001171  =00002200                212  CMD_BUFFER  EQU     $2200
+00001171  =00002300                213  OUTPUT      EQU     $2300
+00001171  =0000000D                214  CR          EQU     $0D                                     ; ascii code for carriage return
+00001171  =0000000A                215  LF          EQU     $0A                                     ; ascii code for line feed
+00001171= 48 45 4C 50 20 00        216  CMD_TBL     DC.B    'HELP ',0
+00001177= 4D 44 53 50 20 00        217              DC.B    'MDSP ',0
+0000117D= 53 4F 52 54 57 20 00     218              DC.B    'SORTW ',0
+00001184= 4D 4D 20 00              219              DC.B    'MM ',0
+00001188= 4D 53 20 00              220              DC.B    'MS ',0
+0000118C= 42 46 20 00              221              DC.B    'BF ',0
+00001190= 42 4D 4F 56 20 00        222              DC.B    'BMOV ',0
+00001196= 42 54 53 54 20 00        223              DC.B    'BTST ',0
+0000119C= 42 53 43 48 20 00        224              DC.B    'BSCH ',0
+000011A2= 47 4F 20 00              225              DC.B    'GO ',0
+000011A6= 44 46 20 00              226              DC.B    'DF ',0
+000011AA= 000010F0                 227  CMD_ADDR    DC.L    HELP
+000011AE= 00001100                 228              DC.L    MDSP
+000011B2= 00001100                 229              DC.L    SORTW
+000011B6= 00001100                 230              DC.L    MM
+000011BA= 00001100                 231              DC.L    MS
+000011BE= 00001100                 232              DC.L    BF
+000011C2= 00001100                 233              DC.L    BMOV
+000011C6= 00001100                 234              DC.L    BTST
+000011CA= 00001100                 235              DC.L    BSCH
+000011CE= 00001100                 236              DC.L    GO
+000011D2= 0000111A                 237              DC.L    DF
+000011D6= 0000111A                 238              DC.L    EXIT
+000011DA= 4D 44 53 50 09 20 ...    239  HELPTEXT    DC.B    'MDSP      Memory Display',CR,LF        ; ascii string with new line
+000011F2= 53 4F 52 54 57 20 ...    240              DC.B    'SORTW       Sort',CR,LF
+00001204= 4D 4D 09 09 4D 65 ...    241              DC.B    'MM     Memory Modify',CR,LF
+00001217= 4D 53 09 09 4D 65 ...    242              DC.B    'MS     Memory Set',CR,LF
+00001227= 42 46 09 09 42 6C ...    243              DC.B    'BF     Block Fill',CR,LF
+00001237= 42 4D 4F 56 09 20 ...    244              DC.B    'BMOV      Block Move',CR,LF
+0000124B= 42 53 43 48 09 20 ...    245              DC.B    'BSCH      Block Test',CR,LF
+0000125F= 47 4F 09 09 45 78 ...    246              DC.B    'GO     Execute Program',CR,LF
+00001274= 44 46 09 09 44 69 ...    247              DC.B    'DF     Display Formatted Registers',CR,LF
+00001295= 45 58 49 54 09 20 ...    248              DC.B    'EXIT      Exit Monitor Program',CR,LF
+000012B3= 00                       249              DC.B    '',0
+000012B4= 48 45 4C 50 00           250  HELP_COMP   DC.B    'HELP',0
+000012B9= 45 58 49 54 00           251  EXIT_COMP   DC.B    'EXIT',0
+000012BE= 3F 20 00                 252  Q_MARK      DC.B    '? ',0
+000012C1= 59 4F 55 20 48 41 ...    253  EMPTY_STR   DC.B    'YOU HAD AN EMPTY STRING',0
+000012D9= 4E 4F 54 20 56 41 ...    254  CMD_ERR_STR DC.B    'NOT VALID',CR,LF
+000012E4= 00                       255              DC.B    '',0
+000012E5= 4E 45 45 44 53 20 ...    256  HEX_ERR_STR DC.B    'NEEDS TO BE A HEXADECIMAL NUMBER. BEGIN ARG WITH "$"',0
+0000131A= 41 52 47 55 4D 45 ...    257  ARG_ERR_STR DC.B    'ARGUMENT ERROR. LIKELY A NON HEX NUMBER',0
+00001342  =00000020                258  SPACE       EQU     $20
+00001342  =00000000                259  NULL        EQU     $00
+00001342  =00000004                260  EOT         EQU     $04
+00001342  =00000024                261  HEX         EQU     $24
+00001342  =00000030                262  ZERO        EQU     $30
+00001342  =0000003B                263  SEMICOLON   EQU     $3B
+00001342                           264  BUS_ERR_MSG
+00001342= 41 20 42 55 53 20 ...    265      DC.B    'A BUS ERROR HAS OCCURRED',$0A,$0D,0
+0000135D                           266  ADDR_ERR_MSG
+0000135D= 41 4E 20 41 44 44 ...    267      DC.B    'AN ADDRESS ERROR HAS OCCURRED',$0A,$0D,0    
+0000137D                           268  ILL_INST_MSG
+0000137D= 54 48 41 54 20 49 ...    269      DC.B    'THAT IS NOT A VALID INSTRUCTION',$0A,$0D,0
+0000139F                           270  DIV0_ERR_MSG
+0000139F= 59 4F 55 20 43 41 ...    271      DC.B    'YOU CANNOT DIVIDE BY ZERO',$0A,$0D,0
+000013BB                           272  PRIV_VIOL_MSG
+000013BB= 50 52 49 56 49 4C ...    273      DC.B    'PRIVILEGE VIOLATION',0
+000013CF                           274  TRACE_MSG
+000013CF= 54 52 41 43 45 20 ...    275      DC.B    'TRACE EXCEPTION',0
+000013DF                           276  LINE_A_MSG
+000013DF= 4C 49 4E 45 20 41 ...    277      DC.B    'LINE A EXCEPTION',0
+000013F0                           278  LINE_F_MSG
+000013F0= 4C 49 4E 45 20 46 ...    279      DC.B    'LINE F EXCEPTION',0
+00001401                           280  
+00001401                           281  
+00001401                           282  
+00001401                           283      END    START        ; last line of source
 
 No errors detected
 No warnings generated
@@ -226,49 +293,66 @@ No warnings generated
 SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
-BF                  10BA
-BMOV                10BA
-BSCH                10BA
-BTST                10BA
+ADDR_ERR_MSG        135D
+ARG_ERROR           114C
+ARG_ERR_STR         131A
+BF                  1100
+BMOV                1100
+BSCH                1100
+BTST                1100
 BUFFER              2100
-CLR_SPC             103A
-CMD_ADDR            1220
+BUS_ERR_MSG         1342
+CLR_SPACE           103A
+CMD_ADDR            11AA
 CMD_BUFFER          2200
-CMD_ERROR           10E6
-CMD_ERR_STR         1275
-CMD_TBL             11E7
-COPY_CMD            1042
+CMD_ERROR           1130
+CMD_ERR_STR         12D9
+CMD_TBL             1171
+COPY_CMD            104A
 CR                  D
-DF                  10CE
-DONE                10F6
-EMPTY               10D6
-EMPTY_STR           125D
+DF                  111A
+DIGIT               10D0
+DIV0_ERR_MSG        139F
+DONE                115A
+EMPTY               1122
+EMPTY_STR           12C1
 EOT                 4
-EXIT                10CE
-EXIT_COMP           1255
-GET_ARG             10A6
-GET_CMD             1060
-GET_CMD_LOOP        1076
-GO                  10BA
-HELP                10AA
-HELPTEXT            110D
-HELP_COMP           1250
+EXIT                111A
+EXIT_COMP           12B9
+GET_ARG             10B2
+GET_ARG_LOOP        10BE
+GET_CMD             1068
+GET_CMD_LOOP        107E
+GO                  1100
+HELP                10F0
+HELPTEXT            11DA
+HELP_COMP           12B4
 HEX                 24
+HEX_ERROR           113E
+HEX_ERR_STR         12E5
+ILL_INST_MSG        137D
 INIT                1010
 INPUT               101C
 LF                  A
-MDSP                10BA
-MM                  10BA
-MONITOR             1100
-MS                  10BA
-NEXT                108E
-NEXT_LOOP           1094
+LINE_A_MSG          13DF
+LINE_F_MSG          13F0
+MDSP                1100
+MM                  1100
+MONITOR             1164
+MS                  1100
+NEXT                1096
+NEXT_LOOP           109C
 NULL                0
 OUTPUT              2300
 PARSE               1030
+PRIV_VIOL_MSG       13BB
 PROMPT              1010
-Q_MARK              125A
-RETURN              10D2
-SORTW               10BA
+Q_MARK              12BE
+RETURN              111E
+RETURN_ARG          10EE
+SEMICOLON           3B
+SORTW               1100
 SPACE               20
 START               1000
+TRACE_MSG           13CF
+ZERO                30
