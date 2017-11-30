@@ -17,8 +17,6 @@ START:                  ; first instruction of program
     CLR.L   D5
     CLR.L   D6
     CLR.L   D7
-    
-* see http://www.easy68k.com/QuickStart/Hello%20World%20Program%203.txt
 
 INIT:
     * Do eception vector table here *
@@ -49,13 +47,13 @@ PARSE:
     LEA     BUFFER,A1
     MOVE.B  #SPACE,D2
     
-CLR_SPACE:                ; don't think i need??
+CLEAR_SPACE:                ; don't think i need?? One forum said I did and code doesn't work without it
     CMP.B (A1),D2
     ADD #$01,A1
-    BEQ CLR_SPACE
+    BEQ CLEAR_SPACE
     
     MOVEQ   #0,D1
-    SUB #$01,A1
+    SUB     #$01,A1
     
     LEA     CMD_BUFFER,A2
 
@@ -148,7 +146,6 @@ RETURN_VALUE:
 
 * PSUEDOCODE:	
 * check if text in ?buffer? is equal to possible commands one by one
-* see http://freesource-codes.blogspot.com/2011/11/string-comparision-in-assembly-language.html
 * will be super long, but entirely copy-paste
 
 
@@ -158,7 +155,7 @@ HELP:
 	TRAP	#15
 	BRA		RETURN
 	
-MDSP:                   ; TODO: Fix
+MDSP:
     LEA     OUTPUT, A2
     LEA     BUFFER, A5
     ADD     #$05, A5
@@ -171,11 +168,11 @@ MDSP:                   ; TODO: Fix
     LEA     BUFFER, A1
     
 NEW
-    MOVE.B  #$00, (A1)
-    MOVE.B  #13, D0
+    MOVE.B  #$00,(A1)
+    MOVE.B  #13,D0
     TRAP    #15
     JSR     DISP_ADDR
-    MOVE.W  #08, D6
+    MOVE.W  #08,D6
     
 DISP_MEM
     MOVE.B  #16, D2
@@ -197,7 +194,7 @@ END_DISP
     TRAP    #15
     JMP     PROMPT
 
-DISP_ADDR       ;PRINT OUT THE VALUE OF A2 (USEFUL FOR MDSP AND MCHG)
+DISP_ADDR
     MOVE.B  #$24, D1
     MOVE    #6, D0
     TRAP    #15
@@ -554,28 +551,13 @@ SWAP:
     JSR     GET_ARG
     MOVE.L  D7,A3
     ADD     #01,A5
-    CMPI.B  #$42,(A5)       ; if has 'B' for byte
     BEQ     SWAP_BYTE
-    CMPI.B  #$57,(A5)       ; if has 'W' for word
-    BEQ     SWAP_WORd
-    CMPI.B  #$4C,(A5)       ; if has 'L' for long
-    BEQ     SWAP_LONG
     JMP     ARG_ERR_STR
     
 SWAP_BYTE:
     MOVE.B  (A2),D1
     MOVE.B  (A3),(A2)
     MOVE.B  D1,(A3)
-    BRA     RETURN
-SWAP_WORD:
-    MOVE.W  (A2),D1
-    MOVE.W  (A3),(A2)
-    MOVE.W  D1,(A3)
-    BRA     RETURN
-SWAP_LONG:
-    MOVE.L  (A2),D1
-    MOVE.L  (A3),(A2)
-    MOVE.L  D1,(A3)
     BRA     RETURN
 
 
@@ -628,7 +610,7 @@ CMD_ADDR    DC.L    HELP
             DC.L    EXIT
             DC.L    DIVZ
 HELPTEXT	DC.B	'MDSP	   Memory Display (MDSP $ONE $TWO) or (MDSP $ONE)',CR,LF		; ascii string with new line
-			DC.B	'SORTW       Sort (SORT $START $END)',CR,LF
+			DC.B	'SORTW       Sort (SORTW $START $END)',CR,LF
 			DC.B	'MM		Memory Modify (MM $ADDRESS) then ($DATA) until (.)',CR,LF
 			DC.B	'MS		Memory Set (MS $ADDRESS DATA)',CR,LF
 			DC.B	'BF		Block Fill (BF $START $END ####)',CR,LF
@@ -637,7 +619,7 @@ HELPTEXT	DC.B	'MDSP	   Memory Display (MDSP $ONE $TWO) or (MDSP $ONE)',CR,LF		; 
 			DC.B    'BSCH      Block Search (BSCH $ONE TWO)',CR,LF
 			DC.B	'GO		Execute Program (GO $ADDRESS)',CR,LF
 			DC.B	'DF		Display Formatted Registers (DF)',CR,LF
-			DC.B	'SWAP	   Swap the data of two registers with length (SWAP $ONE $TWO;B/W/L)',CR,LF
+			DC.B	'SWAP	   Swap the data of two registers(SWAP $ONE $TWO)',CR,LF
 			DC.B    'RESET      Clears nonoperative registers to origional state (RESET )',CR,LF
             DC.B	'EXIT	   Exit Monitor Program (EXIT)',CR,LF
 			DC.B	'',0
