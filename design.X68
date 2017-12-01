@@ -25,7 +25,7 @@ INIT:
     MOVE.L #ADDR_ERR_STR, $C
     MOVE.L #ILL_INST, $10
     MOVE.L #DIV_ZERO, $14
-    ;MOVE.L #CHK_INST, $18
+    MOVE.L #CHK_INST, $18
     MOVE.L #PRIV_VIOL, $20
     MOVE.L #LINE_A, $28
     MOVE.L #LINE_F, $2C
@@ -400,27 +400,27 @@ RETURN:
     BRA     PROMPT
 
 EMPTY:
-    LEA		EMPTY_STR,A1    ; loads EMPTY_STR into A1
-	MOVE.B	#14,D0		    ; display text
+    LEA		EMPTY_STR,A1   
+	MOVE.B	#14,D0		   
 	TRAP	#15
 	BRA		RETURN
 	
 CMD_ERROR:
     JSR     ILL_INST
-    ;LEA     CMD_ERR_STR,A1  ; loads CMD_ERR_STR into A1
-    ;MOVE.B	#14,D0		    ; display text
-	;TRAP	#15
+    LEA     CMD_ERR_STR,A1
+    MOVE.B	#14,D0		   
+	TRAP	#15
 	BRA		RETURN
 	
 HEX_ERROR:
-    LEA     HEX_ERR_STR,A1  ; loads HEX_ERR_STR into A1
-    MOVE.B	#14,D0		    ; display text
+    LEA     HEX_ERR_STR,A1 
+    MOVE.B	#14,D0		   
 	TRAP	#15
 	BRA		RETURN
     
 ARG_ERROR:
-    LEA     ARG_ERR_STR,A1  ; loads ARG_ERR_STR into A1
-    MOVE.B	#14,D0		    ; display text
+    LEA     ARG_ERR_STR,A1 
+    MOVE.B	#14,D0		   
 	TRAP	#15
 	BRA		RETURN
 
@@ -462,6 +462,11 @@ PRIV_VIOL:
 
 TRACE:
     LEA     TRACE_STR,A1
+    MOVE.B  #13,D0
+    TRAP    #15
+    JMP     REG
+CHK_INST:
+    LEA     CHK_ERR_STR,A1
     MOVE.B  #13,D0
     TRAP    #15
     JMP     REG
@@ -652,10 +657,12 @@ TRACE_STR   DC.B    'TRACE EXCEPTION',0
 LINE_A_STR  DC.B    'LINE A EXCEPTION',0
 LINE_F_STR  DC.B    'LINE F EXCEPTION',0
 MEM_ERR_STR DC.B    'ERROR IN MEMORY AT: ',0
+CHK_ERR_STR	DC.B	'CHECK ERROR',0
 SR_STR      DC.B	'SR=',0
 GOOD        DC.B    'NO ERROR DETECTED',LF,CR,0
 
     END    START        ; last line of source
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~

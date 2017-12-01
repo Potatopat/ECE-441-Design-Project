@@ -1,6 +1,6 @@
 00001000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.12.29
-Created On: 11/30/2017 3:53:31 PM
+Created On: 11/30/2017 5:53:37 PM
 
 00000000                             1  *-----------------------------------------------------------
 00000000                             2  * Title      :  Patrick Bartman's Design Project
@@ -21,663 +21,651 @@ Created On: 11/30/2017 3:53:31 PM
 0000100A  4285                      17      CLR.L   D5
 0000100C  4286                      18      CLR.L   D6
 0000100E  4287                      19      CLR.L   D7
-00001010                            20      
-00001010                            21  * see http://www.easy68k.com/QuickStart/Hello%20World%20Program%203.txt
-00001010                            22  
-00001010                            23  INIT:
-00001010                            24      * Do eception vector table here *
-00001010  21FC 00003000 0000        25      MOVE.L #STACK, $0
-00001018  21FC 000013E8 0008        26      MOVE.L #BUS_ERR, $8
-00001020  21FC 00001939 000C        27      MOVE.L #ADDR_ERR_STR, $C
-00001028  21FC 0000140C 0010        28      MOVE.L #ILL_INST, $10
-00001030  21FC 0000141E 0014        29      MOVE.L #DIV_ZERO, $14
-00001038                            30      ;MOVE.L #CHK_INST, $18
-00001038  21FC 00001430 0020        31      MOVE.L #PRIV_VIOL, $20
-00001040  21FC 00001454 0028        32      MOVE.L #LINE_A, $28
-00001048  21FC 00001466 002C        33      MOVE.L #LINE_F, $2C
-00001050                            34  
-00001050                            35  
-00001050                            36  PROMPT:
-00001050  43F9 0000158A             37      LEA     MONITOR,A1  ; gives command prompt
-00001056  103C 000E                 38      MOVE.B  #14,D0      ; stores result in D0
-0000105A  4E4F                      39      TRAP    #15
-0000105C                            40      
-0000105C                            41  INPUT:
-0000105C  43F9 00002100             42      LEA     BUFFER,A1
-00001062  103C 0002                 43      MOVE.B  #2,D0       ; trap task 2 does the following:
-00001066  4E4F                      44      TRAP    #15         ; read a string from the keyboard into A1 of length stored at D1.W
-00001068  B27C 0000                 45      CMP.W   #0,D1       ; compares D1 to the number 0 to see if not empty
-0000106C  6700 0342                 46      BEQ     EMPTY       ; branch EMPTY if they are equal
-00001070                            47      
-00001070                            48  PARSE:
-00001070  43F9 00002100             49      LEA     BUFFER,A1
-00001076  143C 0020                 50      MOVE.B  #SPACE,D2
-0000107A                            51      
-0000107A                            52  CLR_SPACE:                ; don't think i need??
-0000107A  B411                      53      CMP.B (A1),D2
-0000107C  5249                      54      ADD #$01,A1
-0000107E  67FA                      55      BEQ CLR_SPACE
-00001080                            56      
-00001080  7200                      57      MOVEQ   #0,D1
-00001082  5349                      58      SUB #$01,A1
-00001084                            59      
-00001084  45F9 00002200             60      LEA     CMD_BUFFER,A2
-0000108A                            61  
-0000108A                            62  COPY_CMD:
-0000108A  34D9                      63      MOVE    (A1)+,(A2)+
-0000108C  5241                      64      ADDI    #1,D1
-0000108E  0C41 0008                 65      CMPI    #8,D1
-00001092  6C00 032A                 66      BGE     CMD_ERROR
-00001096  0C11 0020                 67      CMPI.B  #SPACE,(A1)
-0000109A  6700 000C                 68      BEQ     GET_CMD
-0000109E  0C11 0000                 69      CMPI.B  #NULL,(A1)
-000010A2  6700 0004                 70      BEQ     GET_CMD
-000010A6  60E2                      71      BRA     COPY_CMD
-000010A8                            72      
-000010A8                            73  GET_CMD:
-000010A8  14BC 0020                 74      MOVE.B  #SPACE,(A2)
-000010AC  43F9 00002200             75      LEA     CMD_BUFFER,A1
-000010B2  45F9 00001597             76      LEA     CMD_TBL,A2
-000010B8  47F9 000015E4             77      LEA     CMD_ADDR,A3
-000010BE                            78  
-000010BE                            79  GET_CMD_LOOP:
-000010BE  B509                      80      CMPM.B  (A1)+,(A2)+
-000010C0  6600 0014                 81      BNE     NEXT
-000010C4  0C11 0020                 82      CMPI.B  #SPACE,(A1)
-000010C8  66F4                      83      BNE     GET_CMD_LOOP
-000010CA  0C12 0020                 84      CMPI.B  #SPACE,(A2)
-000010CE  6600 02EE                 85      BNE     CMD_ERROR
-000010D2  2A53                      86      MOVE.L  (A3),A5         ; command found     ; TODO: find out what's in (A5)
-000010D4  4ED5                      87      JMP     (A5)            ; run command
-000010D6                            88      
-000010D6                            89  NEXT:
-000010D6  43F9 00002200             90      LEA     CMD_BUFFER,A1
-000010DC                            91  
-000010DC                            92  NEXT_LOOP:
-000010DC  0C1A 0000                 93      CMPI.B  #NULL,(A2)+
-000010E0  66FA                      94      BNE     NEXT_LOOP
-000010E2  D6FC 0004                 95      ADD     #EOT,A3        ; TODO: don't think I need, but find out
-000010E6  B4FC 1874                 96      CMPA    #EXIT_COMP,A2
-000010EA  6E00 02D2                 97      BGT     CMD_ERROR
-000010EE  4EF8 10BE                 98      JMP     GET_CMD_LOOP
-000010F2                            99      
-000010F2                           100  GET_ARG:
-000010F2  0C15 0024                101      CMPI.B  #HEX,(A5)       ; checks to make sure that has a hex number as address
-000010F6                           102      ;BNE     HEX_ERROR
-000010F6  3E38 0000                103      MOVE    $0000,D7
-000010FA  3C38 0000                104      MOVE    $0000,D6
-000010FE                           105      
-000010FE                           106  GET_ARG_LOOP:
-000010FE  524D                     107      ADD     #$01,A5
-00001100  E99F                     108      ROL.L   #4,D7
-00001102  DE86                     109      ADD.L   D6,D7
-00001104  1C1D                     110      MOVE.B  (A5)+,D6
-00001106  0C06 0039                111      CMPI.B  #$39,D6         ; if number less than 9
-0000110A  6F00 0004                112      BLE     DIGIT           ; easy, continue to next step
-0000110E  5F06                     113      SUBQ.B  #$07,D6         ; subtract $7 to make A=$3A, .., F=$3F
-00001110                           114      
-00001110                           115  DIGIT:
-00001110  0406 0030                116      SUB.B   #ZERO,D6
-00001114  0C25 0000                117      CMPI.B  #NULL,-(A5)
-00001118  6700 0014                118      BEQ     RETURN_ARG
-0000111C  0C15 0020                119      CMPI.B  #SPACE,(A5)
-00001120  6700 000C                120      BEQ     RETURN_ARG
-00001124  0C15 003B                121      CMPI.B  #SEMICOLON,(A5) ; has aditional arg, return to sender and then call arg loop again
-00001128  6700 0004                122      BEQ     RETURN_ARG
-0000112C  60D0                     123      BRA     GET_ARG_LOOP
-0000112E                           124      
-0000112E                           125  RETURN_ARG:
-0000112E  4E75                     126      RTS
-00001130                           127      
-00001130                           128  GET_VALUE:
-00001130  7E00                     129      MOVEQ   #NULL, D7
-00001132  7C00                     130      MOVEQ   #NULL, D6
-00001134                           131  ADD_VALUE:
-00001134  1C1D                     132      MOVE.B  (A5)+, D6
-00001136  0C06 0039                133      CMPI.B  #$39, D6
-0000113A  6F00 0004                134      BLE     NUM_VALUE
-0000113E  5F06                     135      SUBQ.B  #$07, D6
-00001140                           136  NUM_VALUE:
-00001140  0406 0030                137      SUB.B   #ZERO, D6
-00001144  E99F                     138      ROL.L   #4, D7
-00001146  DE86                     139      ADD.L   D6, D7
-00001148  5301                     140      SUB.B   #$01, D1
-0000114A  0C01 0000                141      CMPI.B  #NULL, D1
-0000114E  6F00 0004                142      BLE     RETURN_VALUE
-00001152  60E0                     143      BRA     ADD_VALUE
-00001154                           144  RETURN_VALUE:
-00001154  4E75                     145      RTS
-00001156                           146  
-00001156                           147      
-00001156                           148  
-00001156                           149  * PSUEDOCODE:   
-00001156                           150  * check if text in ?buffer? is equal to possible commands one by one
-00001156                           151  * see http://freesource-codes.blogspot.com/2011/11/string-comparision-in-assembly-language.html
-00001156                           152  * will be super long, but entirely copy-paste
-00001156                           153  
-00001156                           154  
-00001156                           155  HELP:
-00001156  43F9 00001620            156      LEA     HELPTEXT,A1 ; load helptext into a1
-0000115C  103C 000E                157      MOVE.B  #14,D0      ; display text
-00001160  4E4F                     158      TRAP    #15
-00001162  6000 0248                159      BRA     RETURN
-00001166                           160      
-00001166                           161  MDSP:                   ; TODO: Fix
-00001166  45F9 00002300            162      LEA     OUTPUT, A2
-0000116C  4BF9 00002100            163      LEA     BUFFER, A5
-00001172  5A4D                     164      ADD     #$05, A5
-00001174  4EB8 10F2                165      JSR     GET_ARG
-00001178  2447                     166      MOVE.L  D7, A2
-0000117A  524D                     167      ADD     #$01, A5
-0000117C  4EB8 10F2                168      JSR     GET_ARG
-00001180  2647                     169      MOVE.L  D7, A3
-00001182  7200                     170      MOVEQ   #NULL, D1
-00001184  43F9 00002100            171      LEA     BUFFER, A1
-0000118A                           172      
-0000118A                           173  NEW
-0000118A  12BC 0000                174      MOVE.B  #$00, (A1)
-0000118E  103C 000D                175      MOVE.B  #13, D0
-00001192  4E4F                     176      TRAP    #15
-00001194  4EB9 000011CE            177      JSR     DISP_ADDR
-0000119A  3C3C 0008                178      MOVE.W  #08, D6
-0000119E                           179      
-0000119E                           180  DISP_MEM
-0000119E  143C 0010                181      MOVE.B  #16, D2
-000011A2  B6CA                     182      CMPA    A2, A3
-000011A4  6700 001A                183      BEQ     END_DISP
-000011A8  121A                     184      MOVE.B  (A2)+, D1
-000011AA  103C 000F                185      MOVE.B  #15, D0
-000011AE  4E4F                     186      TRAP    #15
-000011B0  123C 0020                187      MOVE.B  #SPACE, D1
-000011B4  103C 0006                188      MOVE.B  #6, D0
-000011B8  4E4F                     189      TRAP    #15
-000011BA  5346                     190      SUB     #01, D6
-000011BC  67CC                     191      BEQ     NEW
-000011BE  60DE                     192      BRA     DISP_MEM
-000011C0                           193  
-000011C0                           194  END_DISP
-000011C0  123C 0000                195      MOVE.B  #NULL, D1
-000011C4  103C 0000                196      MOVE.B  #0, D0
-000011C8  4E4F                     197      TRAP    #15
-000011CA  4EF8 1050                198      JMP     PROMPT
-000011CE                           199  
-000011CE                           200  DISP_ADDR       ;PRINT OUT THE VALUE OF A2 (USEFUL FOR MDSP AND MCHG)
-000011CE  123C 0024                201      MOVE.B  #$24, D1
-000011D2  303C 0006                202      MOVE    #6, D0
-000011D6  4E4F                     203      TRAP    #15
-000011D8  200A                     204      MOVE.L  A2, D0
-000011DA  43F9 00002300            205      LEA     OUTPUT, A1
-000011E0  343C 0008                206      MOVE.W  #8, D2
-000011E4                           207  DISP_ADDR_2
-000011E4  E998                     208      ROL.L   #4, D0
-000011E6  2600                     209      MOVE.L  D0, D3
-000011E8  C6BC 0000000F            210      AND.L   #$0F, D3
-000011EE  0C03 0009                211      CMPI.B  #$09, D3
-000011F2  6F00 0004                212      BLE     DISP_ADDR_3
-000011F6  5E43                     213      ADD     #$07, D3
-000011F8                           214  DISP_ADDR_3
-000011F8  0643 0030                215      ADD     #$30, D3
-000011FC  12C3                     216      MOVE.B  D3, (A1)+
-000011FE  5342                     217      SUBQ.W  #1, D2
-00001200  66E2                     218      BNE     DISP_ADDR_2
-00001202  12FC 0000                219      MOVE.B  #NULL, (A1)+
-00001206  43F9 00002300            220      LEA     OUTPUT, A1
-0000120C  103C 000E                221      MOVE.B  #14, D0
-00001210  4E4F                     222      TRAP #15
-00001212  123C 003A                223      MOVE.B  #$3A, D1
-00001216  103C 0006                224      MOVE.B  #6, D0
-0000121A  4E4F                     225      TRAP    #15
-0000121C  4E75                     226      RTS
-0000121E                           227  
-0000121E                           228  
-0000121E                           229  SORTW:
-0000121E                           230  
-0000121E                           231  MM:
-0000121E  4BF8 105C                232      LEA     INPUT,A5
-00001222  564D                     233      ADD     #$03,A5
-00001224  4EB8 10F2                234      JSR     GET_ARG
-00001228  2447                     235      MOVE.L  D7,A2
-0000122A                           236  MOD_LOOP:
-0000122A  43F9 00002300            237      LEA     OUTPUT, A1
-00001230  4EB8 11CE                238      JSR     DISP_ADDR
-00001234  103C 0002                239      MOVE.B  #2,D0
-00001238  4E4F                     240      TRAP    #15
-0000123A  43F9 00002300            241      LEA     OUTPUT,A1
-00001240  0C11 002E                242      CMPI.B  #$2E,(A1)
-00001244  6700 0014                243      BEQ     DONE_MOD
-00001248  0C01 0002                244      CMPI.B  #2,D1
-0000124C                           245      ;BNE        ARG_ERR
-0000124C  4BF9 00002300            246      LEA     OUTPUT, A5
-00001252  4EB8 1130                247      JSR     GET_VALUE
-00001256  14C7                     248      MOVE.B  D7,(A2)+
-00001258  60D0                     249      BRA     MOD_LOOP
-0000125A                           250  
-0000125A                           251  DONE_MOD:
-0000125A  6000 0150                252      BRA     RETURN
-0000125E                           253  
-0000125E                           254  MS:
-0000125E                           255  
-0000125E                           256  BF:
-0000125E  4BF9 00002100            257      LEA     BUFFER, A5
-00001264  564D                     258      ADD     #$03, A5
-00001266  4EB8 10F2                259      JSR     GET_ARG
-0000126A  2447                     260      MOVE.L  D7, A2
-0000126C  524D                     261      ADD     #$01, A5
-0000126E  4EB8 10F2                262      JSR     GET_ARG
-00001272  2647                     263      MOVE.L  D7, A3
-00001274  7200                     264      MOVEQ   #00, D1
-00001276  2C4D                     265      MOVE.L  A5, A6
-00001278  524E                     266      ADD     #01, A6
-0000127A                           267      
-0000127A                           268  GET_LENGTH:
-0000127A  5241                     269      ADD     #01, D1
-0000127C  0C1E 0000                270      CMPI.B  #NULL, (A6)+
-00001280  66F8                     271      BNE     GET_LENGTH
-00001282  0C01 0005                272      CMPI.B  #05, D1
-00001286                           273      ;BNE        ARG_ERR        
-00001286  4EB8 1130                274      JSR     GET_VALUE    ;D7 NOW STORES THE WORD WE WANT TO FILL
-0000128A                           275      
-0000128A                           276  FILL_MEM:
-0000128A  B4CB                     277      CMPA    A3, A2
-0000128C  6C00 0006                278      BGE     DONE_FILL
-00001290  34C7                     279      MOVE.W  D7, (A2)+
-00001292  60F6                     280      BRA     FILL_MEM
-00001294                           281  
-00001294                           282  DONE_FILL:
-00001294  123C 0000                283      MOVE.B  #NULL, D1
-00001298  103C 0000                284      MOVE.B  #0, D0
-0000129C  4E4F                     285      TRAP    #15
-0000129E  4EF8 1050                286      JMP     PROMPT
-000012A2                           287  
-000012A2                           288  BMOV:
-000012A2  4BF9 00002100            289      LEA     BUFFER,A5
-000012A8  5A4D                     290      ADD     #05,A5
-000012AA  4EB8 10F2                291      JSR     GET_ARG
-000012AE  2447                     292      MOVE.L  D7,A2
-000012B0  524D                     293      ADD     #01,A5
-000012B2  4EB8 10F2                294      JSR     GET_ARG
-000012B6  2647                     295      MOVE.L  D7,A3
-000012B8  524D                     296      ADD     #01,A5
-000012BA  4EB8 10F2                297      JSR     GET_ARG
-000012BE  2847                     298      MOVE.L  D7,A4
-000012C0                           299  MOVE_MEM:
-000012C0  B4CB                     300      CMPA    A3,A2
-000012C2  6C00 0006                301      BGE     DONE_MOVE
-000012C6  38DA                     302      MOVE.W  (A2)+,(A4)+
-000012C8  60F6                     303      BRA     MOVE_MEM
-000012CA                           304      
-000012CA                           305  DONE_MOVE
-000012CA  123C 0000                306      MOVE.B  #NULL,D1
-000012CE  103C 0000                307      MOVE.B  #0,D0
-000012D2  4E4F                     308      TRAP    #15
-000012D4  4EF9 000013AC            309      JMP     RETURN
-000012DA                           310  
-000012DA                           311  
-000012DA                           312  BTST:
-000012DA  45F9 00002300            313      LEA     OUTPUT, A2
-000012E0  4BF9 00002100            314      LEA     BUFFER, A5
-000012E6  5A4D                     315      ADD     #$05, A5
-000012E8  4EB8 10F2                316      JSR     GET_ARG
-000012EC  2447                     317      MOVE.L  D7, A2
-000012EE  524D                     318      ADD     #$01, A5
-000012F0  4EB8 10F2                319      JSR     GET_ARG
-000012F4  2647                     320      MOVE.L  D7, A3
-000012F6  2A4A                     321      MOVE.L  A2, A5      ;STORE COPY OF START LOCATION
-000012F8                           322  WRITE_TEST
-000012F8  B6CA                     323      CMPA    A2, A3
-000012FA  6D00 0008                324      BLT     DONE_WRITE
-000012FE  34FC AAAA                325      MOVE.W  #$AAAA, (A2)+
-00001302  60F4                     326      BRA     WRITE_TEST
-00001304                           327  DONE_WRITE
-00001304  244D                     328      MOVE.L  A5, A2
-00001306                           329  READ_TEST
-00001306  0C52 AAAA                330      CMP.W   #$AAAA, (A2)
-0000130A  6600 002E                331      BNE     MEM_ERR
-0000130E  34FC AAAA                332      MOVE.W  #$AAAA, (A2)+
-00001312  B6CA                     333      CMPA    A2, A3
-00001314  6EF0                     334      BGT     READ_TEST
-00001316                           335      
-00001316  244D                     336      MOVE.L  A5, A2
-00001318                           337  TEST
-00001318  0C52 AAAA                338      CMP.W   #$AAAA, (A2)
-0000131C  6600 001C                339      BNE     MEM_ERR
-00001320  34FC 0000                340      MOVE.W  #$0000, (A2)+
-00001324  B6CA                     341      CMPA    A2, A3
-00001326  6EF0                     342      BGT     TEST
-00001328  43F9 000019D7            343      LEA     GOOD, A1
-0000132E  103C 000E                344      MOVE.B  #14, D0
-00001332  4E4F                     345      TRAP    #15
-00001334                           346  
-00001334                           347      
-00001334  4EF9 000013AC            348      JMP     RETURN
-0000133A                           349  
-0000133A                           350  MEM_ERR
-0000133A  43F9 000019BE            351      LEA     MEM_ERR_STR, A1
-00001340  103C 000D                352      MOVE.B  #13, D0
-00001344  4E4F                     353      TRAP    #15
-00001346  4EF9 000013AC            354      JMP     RETURN
-0000134C                           355  
-0000134C                           356  BSCH:
-0000134C                           357  
-0000134C                           358  GO: 
-0000134C  4BF9 00002100            359      LEA     BUFFER,A5
-00001352  564D                     360      ADD     #$03,A5
-00001354  4EB8 10F2                361      JSR     GET_ARG
-00001358  43F9 00002300            362      LEA     OUTPUT,A1
-0000135E  2247                     363      MOVE.L  D7,A1       ; moves GO's arg into A7
-00001360  4ED1                     364      JMP     (A1)        ; branch to location to run that program
-00001362  6000 0048                365      BRA     RETURN
-00001366                           366      
-00001366                           367  DF:
-00001366  4EB9 00001478            368      JSR     REG
-0000136C                           369      
-0000136C  6000 003E                370      BRA     RETURN
-00001370                           371      
-00001370                           372      
-00001370                           373  RESET:
-00001370  247C 00000000            374      MOVE.L  #NULL,A2
-00001376  267C 00000FFF            375      MOVE.L  #$00000FFF,A3
-0000137C  7EFF                     376      MOVE.L  #$FFFFFFFF,D7
-0000137E                           377      
-0000137E  4EF8 128A                378      JMP     FILL_MEM
-00001382                           379      
-00001382  7EFF                     380      MOVE.L  #$FFFFFFFF,D7
-00001384  247C 00002000            381      MOVE.L  #$2000,A2
-0000138A  267C 00003000            382      MOVE.L  #$3000,A3
-00001390                           383      
-00001390  4EF8 128A                384      JMP     FILL_MEM
-00001394                           385      
-00001394  4280                     386      CLR.L   D0
-00001396  4281                     387      CLR.L   D1
-00001398  4282                     388      CLR.L   D2
-0000139A  4283                     389      CLR.L   D3
-0000139C  4284                     390      CLR.L   D4
-0000139E  4285                     391      CLR.L   D5
-000013A0  4286                     392      CLR.L   D6
-000013A2  4287                     393      CLR.L   D7
-000013A4                           394      
-000013A4  6000 0006                395      BRA     RETURN
-000013A8                           396  
-000013A8                           397  EXIT:
-000013A8  6000 0038                398      BRA     DONE
-000013AC                           399      
-000013AC                           400  RETURN:
-000013AC                           401      ;MOVE.B  #14,D0      ; go back to monitor
-000013AC                           402      ;TRAP    #15
-000013AC  6000 FCA2                403      BRA     PROMPT
-000013B0                           404  
-000013B0                           405  EMPTY:
-000013B0  43F9 0000187C            406      LEA     EMPTY_STR,A1    ; loads EMPTY_STR into A1
-000013B6  103C 000E                407      MOVE.B  #14,D0          ; display text
-000013BA  4E4F                     408      TRAP    #15
-000013BC  60EE                     409      BRA     RETURN
-000013BE                           410      
-000013BE                           411  CMD_ERROR:
-000013BE  4EB9 0000140C            412      JSR     ILL_INST
-000013C4                           413      ;LEA     CMD_ERR_STR,A1  ; loads CMD_ERR_STR into A1
-000013C4                           414      ;MOVE.B #14,D0          ; display text
-000013C4                           415      ;TRAP   #15
-000013C4  60E6                     416      BRA     RETURN
-000013C6                           417      
-000013C6                           418  HEX_ERROR:
-000013C6  43F9 000018A0            419      LEA     HEX_ERR_STR,A1  ; loads HEX_ERR_STR into A1
-000013CC  103C 000E                420      MOVE.B  #14,D0          ; display text
-000013D0  4E4F                     421      TRAP    #15
-000013D2  60D8                     422      BRA     RETURN
-000013D4                           423      
-000013D4                           424  ARG_ERROR:
-000013D4  43F9 000018D5            425      LEA     ARG_ERR_STR,A1  ; loads ARG_ERR_STR into A1
-000013DA  103C 000E                426      MOVE.B  #14,D0          ; display text
-000013DE  4E4F                     427      TRAP    #15
-000013E0  60CA                     428      BRA     RETURN
-000013E2                           429  
-000013E2                           430  DONE:
-000013E2  103C 0009                431      MOVE.B  #9,D0
-000013E6  4E4F                     432      TRAP    #15         ; halt simulator
-000013E8                           433      
-000013E8                           434      
-000013E8                           435      
-000013E8                           436  BUS_ERR:
-000013E8  43F9 0000192D            437      LEA     BUS_ERR_STR, A1
-000013EE  103C 000D                438      MOVE.B  #13, D0
-000013F2  4E4F                     439      TRAP    #15
-000013F4  4EF9 00001478            440      JMP     REG
-000013FA                           441  
-000013FA                           442  ADDR_ERR:
-000013FA  43F9 00001939            443      LEA     ADDR_ERR_STR, A1
-00001400  103C 000D                444      MOVE.B  #13, D0
-00001404  4E4F                     445      TRAP    #15
-00001406  4EF9 00001478            446      JMP     REG
-0000140C                           447  
-0000140C                           448  ILL_INST:
-0000140C  43F9 00001949            449      LEA     ILL_INST_STR, A1
-00001412  103C 000D                450      MOVE.B  #13, D0
-00001416  4E4F                     451      TRAP    #15
-00001418  4EF9 00001478            452      JMP     REG
-0000141E                           453  
-0000141E                           454  DIV_ZERO:
-0000141E  43F9 00001961            455      LEA     DIV0_ERR_STR, A1
-00001424  103C 000D                456      MOVE.B  #13, D0
-00001428  4E4F                     457      TRAP    #15
-0000142A  4EF9 00001478            458      JMP     REG
-00001430                           459  
-00001430                           460  PRIV_VIOL:
-00001430  43F9 00001978            461      LEA     PRIV_VIOL_STR, A1
-00001436  103C 000D                462      MOVE.B  #13, D0
-0000143A  4E4F                     463      TRAP    #15
-0000143C  4EF9 00001478            464      JMP     REG
-00001442                           465  
-00001442                           466  TRACE:
-00001442  43F9 0000198C            467      LEA     TRACE_STR,A1
-00001448  103C 000D                468      MOVE.B  #13,D0
-0000144C  4E4F                     469      TRAP    #15
-0000144E  4EF9 00001478            470      JMP     REG
-00001454                           471  
-00001454                           472  LINE_A:
-00001454  43F9 0000199C            473      LEA     LINE_A_STR,A1
-0000145A  103C 000D                474      MOVE.B  #13,D0
-0000145E  4E4F                     475      TRAP    #15
-00001460  4EF9 00001478            476      JMP     REG
-00001466                           477  
-00001466                           478  LINE_F:
-00001466  43F9 000019AD            479      LEA     LINE_F_STR,A1
-0000146C  103C 000D                480      MOVE.B  #13,D0
-00001470  4E4F                     481      TRAP    #15
-00001472  4EF9 00001478            482      JMP     REG
-00001478                           483      
-00001478                           484  REG:
-00001478  4FF9 00003000            485      LEA     STACK,A7
-0000147E  48E7 FFFF                486      MOVEM.L D0-D7/A0-A7,-(A7)
-00001482  7A00                     487      MOVEQ   #00,D5
-00001484                           488      
-00001484                           489  NXT_REG:
-00001484  43F9 000018FD            490      LEA     RGSTR_STR,A1
-0000148A  D2C5                     491      ADD     D5,A1
-0000148C  5645                     492      ADD     #$03,D5
-0000148E  323C 0003                493      MOVE.W  #03,D1
-00001492  103C 0001                494      MOVE.B  #01,D0
-00001496  4E4F                     495      TRAP    #15
-00001498  43F9 00002300            496      LEA     OUTPUT,A1
-0000149E  343C 0008                497      MOVE.W  #8, D2
-000014A2  201F                     498      MOVE.L  (A7)+,D0
-000014A4                           499      
-000014A4                           500  NXT_DIG:
-000014A4  E998                     501      ROL.L   #4,D0
-000014A6  2600                     502      MOVE.L  D0,D3
-000014A8  C6BC 0000000F            503      AND.L   #$0F,D3
-000014AE  0C03 0009                504      CMPI.B  #$09,D3
-000014B2  6F00 0004                505      BLE     LESS
-000014B6  5E43                     506      ADD     #$07,D3
-000014B8                           507  LESS:
-000014B8  0643 0030                508      ADD     #$30,D3
-000014BC  12C3                     509      MOVE.B  D3,(A1)+
-000014BE  5342                     510      SUBQ.W  #1,D2
-000014C0  66E2                     511      BNE     NXT_DIG
-000014C2                           512      
-000014C2  12FC 0000                513      MOVE.B  #$00,(A1)+
-000014C6  43F9 00002300            514      LEA     OUTPUT,A1
-000014CC  103C 000D                515      MOVE.B  #13,D0
-000014D0  4E4F                     516      TRAP    #15
-000014D2  BEFC 3000                517      CMPA    #STACK,A7
-000014D6  6DAC                     518      BLT     NXT_REG   
-000014D8                           519      
-000014D8                           520  SR:
-000014D8  4FF9 00003000            521      LEA     STACK,A7
-000014DE  40E7                     522      MOVE    SR,-(A7)
-000014E0  43F9 000019D3            523      LEA     SR_STR,A1
-000014E6  103C 000E                524      MOVE.B  #14,D0
-000014EA  4E4F                     525      TRAP    #15
-000014EC  43F9 00002300            526      LEA     OUTPUT,A1
-000014F2  343C 0004                527      MOVE.W  #4,D2
-000014F6  201F                     528      MOVE.L  (A7)+,D0
-000014F8                           529  NXT_SR:
-000014F8  E998                     530      ROL.L   #4,D0
-000014FA  2600                     531      MOVE.L  D0,D3
-000014FC  C6BC 0000000F            532      AND.L   #$0F,D3
-00001502  0C03 0009                533      CMPI.B  #$09,D3
-00001506  6F00 0004                534      BLE     LESS_SR
-0000150A  5E43                     535      ADD     #$07,D3
-0000150C                           536  LESS_SR:
-0000150C  0643 0030                537      ADD     #$30,D3
-00001510  12C3                     538      MOVE.B  D3,(A1)+
-00001512  5342                     539      SUBQ.W  #1,D2
-00001514  66E2                     540      BNE     NXT_SR
-00001516  12FC 0000                541      MOVE.B  #$00,(A1)+
-0000151A  43F9 00002300            542      LEA     OUTPUT,A1
-00001520  103C 000D                543      MOVE.B  #13,D0
-00001524  4E4F                     544      TRAP    #15
-00001526  4EF8 1050                545      JMP     PROMPT
-0000152A                           546  
-0000152A                           547  
-0000152A                           548  SWAP:
-0000152A  4BF8 105C                549      LEA     INPUT,A5
-0000152E  5A4D                     550      ADD     #05,A5
-00001530  4EB8 10F2                551      JSR     GET_ARG
-00001534  2447                     552      MOVE.L  D7,A2
-00001536  524D                     553      ADD     #01,A5
-00001538  4EB8 10F2                554      JSR     GET_ARG
-0000153C  2647                     555      MOVE.L  D7,A3
-0000153E  524D                     556      ADD     #01,A5
-00001540  0C15 0042                557      CMPI.B  #$42,(A5)       ; if has 'B' for byte
-00001544  6700 0018                558      BEQ     SWAP_BYTE
-00001548  0C15 0057                559      CMPI.B  #$57,(A5)       ; if has 'W' for word
-0000154C  6700 001A                560      BEQ     SWAP_WORd
-00001550  0C15 004C                561      CMPI.B  #$4C,(A5)       ; if has 'L' for long
-00001554  6700 001C                562      BEQ     SWAP_LONG
-00001558  4EF9 000018D5            563      JMP     ARG_ERR_STR
-0000155E                           564      
-0000155E                           565  SWAP_BYTE:
-0000155E  1212                     566      MOVE.B  (A2),D1
-00001560  1493                     567      MOVE.B  (A3),(A2)
-00001562  1681                     568      MOVE.B  D1,(A3)
-00001564  6000 FE46                569      BRA     RETURN
-00001568                           570  SWAP_WORD:
-00001568  3212                     571      MOVE.W  (A2),D1
-0000156A  3493                     572      MOVE.W  (A3),(A2)
-0000156C  3681                     573      MOVE.W  D1,(A3)
-0000156E  6000 FE3C                574      BRA     RETURN
-00001572                           575  SWAP_LONG:
-00001572  2212                     576      MOVE.L  (A2),D1
-00001574  2493                     577      MOVE.L  (A3),(A2)
-00001576  2681                     578      MOVE.L  D1,(A3)
-00001578  6000 FE32                579      BRA     RETURN
-0000157C                           580  
-0000157C                           581  
-0000157C                           582  DIVZ:
-0000157C  4280                     583      CLR.L   D0
-0000157E  4281                     584      CLR.L   D1
-00001580  82C0                     585      DIVU    D0,D1
-00001582  6000 FE28                586      BRA RETURN
-00001586                           587  
-00001586                           588      
-00001586                           589      
-00001586                           590  
-00001586  FFFF FFFF                591      SIMHALT             ; halt simulator
-0000158A                           592  
-0000158A                           593  * Put variables and constants here
-0000158A                           594  
-0000158A= 4D 4F 4E 49 54 4F ...    595  MONITOR     DC.B    'MONITOR441> ',0                        ; command prompt input message
-00001597  =00002100                596  BUFFER      EQU     $2100                                   ; input string storage
-00001597  =00002200                597  CMD_BUFFER  EQU     $2200
-00001597  =00002300                598  OUTPUT      EQU     $2300
-00001597  =0000000D                599  CR          EQU     $0D                                     ; ascii code for carriage return
-00001597  =0000000A                600  LF          EQU     $0A                                     ; ascii code for line feed
-00001597= 48 45 4C 50 20 00        601  CMD_TBL     DC.B    'HELP ',0
-0000159D= 4D 44 53 50 20 00        602              DC.B    'MDSP ',0
-000015A3= 53 4F 52 54 57 20 00     603              DC.B    'SORTW ',0
-000015AA= 53 57 41 50 20 00        604              DC.B    'SWAP ',0
-000015B0= 4D 4D 20 00              605              DC.B    'MM ',0
-000015B4= 4D 53 20 00              606              DC.B    'MS ',0
-000015B8= 42 46 20 00              607              DC.B    'BF ',0
-000015BC= 42 4D 4F 56 20 00        608              DC.B    'BMOV ',0
-000015C2= 42 54 53 54 20 00        609              DC.B    'BTST ',0
-000015C8= 42 53 43 48 20 00        610              DC.B    'BSCH ',0
-000015CE= 47 4F 20 00              611              DC.B    'GO ',0
-000015D2= 44 46 20 00              612              DC.B    'DF ',0
-000015D6= 52 45 53 45 54 20 00     613              DC.B    'RESET ',0
-000015DD= 44 49 56 5A 20 00        614              DC.B    'DIVZ ',0
-000015E4= 00001156                 615  CMD_ADDR    DC.L    HELP
-000015E8= 00001166                 616              DC.L    MDSP
-000015EC= 0000121E                 617              DC.L    SORTW
-000015F0= 0000152A                 618              DC.L    SWAP
-000015F4= 0000121E                 619              DC.L    MM
-000015F8= 0000125E                 620              DC.L    MS
-000015FC= 0000125E                 621              DC.L    BF
-00001600= 000012A2                 622              DC.L    BMOV
-00001604= 000012DA                 623              DC.L    BTST
-00001608= 0000134C                 624              DC.L    BSCH
-0000160C= 0000134C                 625              DC.L    GO
-00001610= 00001366                 626              DC.L    DF
-00001614= 00001370                 627              DC.L    RESET
-00001618= 000013A8                 628              DC.L    EXIT
-0000161C= 0000157C                 629              DC.L    DIVZ
-00001620= 4D 44 53 50 09 20 ...    630  HELPTEXT    DC.B    'MDSP      Memory Display (MDSP $ONE $TWO) or (MDSP $ONE)',CR,LF        ; ascii string with new line
-00001658= 53 4F 52 54 57 20 ...    631              DC.B    'SORTW       Sort (SORT $START $END)',CR,LF
-0000167D= 4D 4D 09 09 4D 65 ...    632              DC.B    'MM     Memory Modify (MM $ADDRESS) then ($DATA) until (.)',CR,LF
-000016B5= 4D 53 09 09 4D 65 ...    633              DC.B    'MS     Memory Set (MS $ADDRESS DATA)',CR,LF
-000016D8= 42 46 09 09 42 6C ...    634              DC.B    'BF     Block Fill (BF $START $END ####)',CR,LF
-000016FE= 42 4D 4F 56 09 20 ...    635              DC.B    'BMOV      Block Move (BMOV $ONE $TWO)',CR,LF
-00001723= 42 54 53 54 09 20 ...    636              DC.B    'BTST      Block Test (BTST $ONE TWO)',CR,LF
-00001747= 42 53 43 48 20 20 ...    637              DC.B    'BSCH      Block Search (BSCH $ONE TWO)',CR,LF
-0000176F= 47 4F 09 09 45 78 ...    638              DC.B    'GO     Execute Program (GO $ADDRESS)',CR,LF
-00001792= 44 46 09 09 44 69 ...    639              DC.B    'DF     Display Formatted Registers (DF)',CR,LF
-000017B8= 53 57 41 50 09 20 ...    640              DC.B    'SWAP      Swap the data of two registers with length (SWAP $ONE $TWO;B/W/L)',CR,LF
-00001803= 52 45 53 45 54 20 ...    641              DC.B    'RESET      Clears nonoperative registers to origional state (RESET )',CR,LF
-00001849= 45 58 49 54 09 20 ...    642              DC.B    'EXIT      Exit Monitor Program (EXIT)',CR,LF
-0000186E= 00                       643              DC.B    '',0
-0000186F= 48 45 4C 50 00           644  HELP_COMP   DC.B    'HELP',0
-00001874= 45 58 49 54 00           645  EXIT_COMP   DC.B    'EXIT',0
-00001879= 3F 20 00                 646  Q_MARK      DC.B    '? ',0
-0000187C= 59 4F 55 20 48 41 ...    647  EMPTY_STR   DC.B    'YOU HAD AN EMPTY STRING',0
-00001894= 4E 4F 54 20 56 41 ...    648  CMD_ERR_STR DC.B    'NOT VALID',CR,LF
-0000189F= 00                       649              DC.B    '',0
-000018A0= 4E 45 45 44 53 20 ...    650  HEX_ERR_STR DC.B    'NEEDS TO BE A HEXADECIMAL NUMBER. BEGIN ARG WITH "$"',0
-000018D5= 41 52 47 55 4D 45 ...    651  ARG_ERR_STR DC.B    'ARGUMENT ERROR. LIKELY A NON HEX NUMBER',0
-000018FD  =00000020                652  SPACE       EQU     $20
-000018FD  =00000000                653  NULL        EQU     $00
-000018FD  =00000004                654  EOT         EQU     $04
-000018FD  =00000024                655  HEX         EQU     $24
-000018FD  =00000030                656  ZERO        EQU     $30
-000018FD  =0000003B                657  SEMICOLON   EQU     $3B
-000018FD  =00003000                658  STACK       EQU     $3000
-000018FD= 44 30 3D 44 31 3D ...    659  RGSTR_STR   DC.B    'D0=D1=D2=D3=D4=D5=D6=D7=A0=A1=A2=A3=A4=A5=A6=A7='
-0000192D= 42 55 53 20 45 52 ...    660  BUS_ERR_STR DC.B    'BUS ERROR',$0A,$0D,0
-00001939                           661  ADDR_ERR_STR
-00001939= 41 44 44 52 45 53 ...    662              DC.B    'ADDRESS ERROR',LF,CR,0    
-00001949                           663  ILL_INST_STR
-00001949= 4E 4F 54 20 56 41 ...    664              DC.B    'NOT VALID INSTRUCTION',LF,CR,0
-00001961                           665  DIV0_ERR_STR
-00001961= 44 49 56 49 44 45 ...    666              DC.B    'DIVIDE BY ZERO ERROR',LF,CR,0
-00001978                           667  PRIV_VIOL_STR
-00001978= 50 52 49 56 49 4C ...    668              DC.B    'PRIVILEGE VIOLATION',0
-0000198C= 54 52 41 43 45 20 ...    669  TRACE_STR   DC.B    'TRACE EXCEPTION',0
-0000199C= 4C 49 4E 45 20 41 ...    670  LINE_A_STR  DC.B    'LINE A EXCEPTION',0
-000019AD= 4C 49 4E 45 20 46 ...    671  LINE_F_STR  DC.B    'LINE F EXCEPTION',0
-000019BE= 45 52 52 4F 52 20 ...    672  MEM_ERR_STR DC.B    'ERROR IN MEMORY AT: ',0
-000019D3= 53 52 3D 00              673  SR_STR      DC.B    'SR=',0
-000019D7= 4E 4F 20 45 52 52 ...    674  GOOD        DC.B    'NO ERROR DETECTED',LF,CR,0
-000019EB                           675  
-000019EB                           676      END    START        ; last line of source
+00001010                            20  
+00001010                            21  INIT:
+00001010                            22      * Do eception vector table here *
+00001010  21FC 00003000 0000        23      MOVE.L #STACK, $0
+00001018  21FC 000013FC 0008        24      MOVE.L #BUS_ERR, $8
+00001020  21FC 00001925 000C        25      MOVE.L #ADDR_ERR_STR, $C
+00001028  21FC 00001420 0010        26      MOVE.L #ILL_INST, $10
+00001030  21FC 00001432 0014        27      MOVE.L #DIV_ZERO, $14
+00001038  21FC 00001468 0018        28      MOVE.L #CHK_INST, $18
+00001040  21FC 00001444 0020        29      MOVE.L #PRIV_VIOL, $20
+00001048  21FC 0000147A 0028        30      MOVE.L #LINE_A, $28
+00001050  21FC 0000148C 002C        31      MOVE.L #LINE_F, $2C
+00001058                            32  
+00001058                            33  
+00001058                            34  PROMPT:
+00001058  43F9 00001588             35      LEA     MONITOR,A1  ; gives command prompt
+0000105E  103C 000E                 36      MOVE.B  #14,D0      ; stores result in D0
+00001062  4E4F                      37      TRAP    #15
+00001064                            38      
+00001064                            39  INPUT:
+00001064  43F9 00002100             40      LEA     BUFFER,A1
+0000106A  103C 0002                 41      MOVE.B  #2,D0       ; trap task 2 does the following:
+0000106E  4E4F                      42      TRAP    #15         ; read a string from the keyboard into A1 of length stored at D1.W
+00001070  B27C 0000                 43      CMP.W   #0,D1       ; compares D1 to the number 0 to see if not empty
+00001074  6700 0342                 44      BEQ     EMPTY       ; branch EMPTY if they are equal
+00001078                            45      
+00001078                            46  PARSE:
+00001078  43F9 00002100             47      LEA     BUFFER,A1
+0000107E  143C 0020                 48      MOVE.B  #SPACE,D2
+00001082                            49      
+00001082                            50  CLEAR_SPACE:                ; don't think i need?? One forum said I did and code doesn't work without it
+00001082  B411                      51      CMP.B (A1),D2
+00001084  5249                      52      ADD #$01,A1
+00001086  67FA                      53      BEQ CLEAR_SPACE
+00001088                            54      
+00001088  7200                      55      MOVEQ   #0,D1
+0000108A  5349                      56      SUB     #$01,A1
+0000108C                            57      
+0000108C  45F9 00002200             58      LEA     CMD_BUFFER,A2
+00001092                            59  
+00001092                            60  COPY_CMD:
+00001092  34D9                      61      MOVE    (A1)+,(A2)+
+00001094  5241                      62      ADDI    #1,D1
+00001096  0C41 0008                 63      CMPI    #8,D1
+0000109A  6C00 032A                 64      BGE     CMD_ERROR
+0000109E  0C11 0020                 65      CMPI.B  #SPACE,(A1)
+000010A2  6700 000C                 66      BEQ     GET_CMD
+000010A6  0C11 0000                 67      CMPI.B  #NULL,(A1)
+000010AA  6700 0004                 68      BEQ     GET_CMD
+000010AE  60E2                      69      BRA     COPY_CMD
+000010B0                            70      
+000010B0                            71  GET_CMD:
+000010B0  14BC 0020                 72      MOVE.B  #SPACE,(A2)
+000010B4  43F9 00002200             73      LEA     CMD_BUFFER,A1
+000010BA  45F9 00001595             74      LEA     CMD_TBL,A2
+000010C0  47F9 000015E2             75      LEA     CMD_ADDR,A3
+000010C6                            76  
+000010C6                            77  GET_CMD_LOOP:
+000010C6  B509                      78      CMPM.B  (A1)+,(A2)+
+000010C8  6600 0014                 79      BNE     NEXT
+000010CC  0C11 0020                 80      CMPI.B  #SPACE,(A1)
+000010D0  66F4                      81      BNE     GET_CMD_LOOP
+000010D2  0C12 0020                 82      CMPI.B  #SPACE,(A2)
+000010D6  6600 02EE                 83      BNE     CMD_ERROR
+000010DA  2A53                      84      MOVE.L  (A3),A5         ; command found     ; TODO: find out what's in (A5)
+000010DC  4ED5                      85      JMP     (A5)            ; run command
+000010DE                            86      
+000010DE                            87  NEXT:
+000010DE  43F9 00002200             88      LEA     CMD_BUFFER,A1
+000010E4                            89  
+000010E4                            90  NEXT_LOOP:
+000010E4  0C1A 0000                 91      CMPI.B  #NULL,(A2)+
+000010E8  66FA                      92      BNE     NEXT_LOOP
+000010EA  D6FC 0004                 93      ADD     #EOT,A3        ; TODO: don't think I need, but find out
+000010EE  B4FC 1860                 94      CMPA    #EXIT_COMP,A2
+000010F2  6E00 02D2                 95      BGT     CMD_ERROR
+000010F6  4EF8 10C6                 96      JMP     GET_CMD_LOOP
+000010FA                            97      
+000010FA                            98  GET_ARG:
+000010FA  0C15 0024                 99      CMPI.B  #HEX,(A5)       ; checks to make sure that has a hex number as address
+000010FE                           100      ;BNE     HEX_ERROR
+000010FE  3E38 0000                101      MOVE    $0000,D7
+00001102  3C38 0000                102      MOVE    $0000,D6
+00001106                           103      
+00001106                           104  GET_ARG_LOOP:
+00001106  524D                     105      ADD     #$01,A5
+00001108  E99F                     106      ROL.L   #4,D7
+0000110A  DE86                     107      ADD.L   D6,D7
+0000110C  1C1D                     108      MOVE.B  (A5)+,D6
+0000110E  0C06 0039                109      CMPI.B  #$39,D6         ; if number less than 9
+00001112  6F00 0004                110      BLE     DIGIT           ; easy, continue to next step
+00001116  5F06                     111      SUBQ.B  #$07,D6         ; subtract $7 to make A=$3A, .., F=$3F
+00001118                           112      
+00001118                           113  DIGIT:
+00001118  0406 0030                114      SUB.B   #ZERO,D6
+0000111C  0C25 0000                115      CMPI.B  #NULL,-(A5)
+00001120  6700 0014                116      BEQ     RETURN_ARG
+00001124  0C15 0020                117      CMPI.B  #SPACE,(A5)
+00001128  6700 000C                118      BEQ     RETURN_ARG
+0000112C  0C15 003B                119      CMPI.B  #SEMICOLON,(A5) ; has aditional arg, return to sender and then call arg loop again
+00001130  6700 0004                120      BEQ     RETURN_ARG
+00001134  60D0                     121      BRA     GET_ARG_LOOP
+00001136                           122      
+00001136                           123  RETURN_ARG:
+00001136  4E75                     124      RTS
+00001138                           125      
+00001138                           126  GET_VALUE:
+00001138  7E00                     127      MOVEQ   #NULL, D7
+0000113A  7C00                     128      MOVEQ   #NULL, D6
+0000113C                           129  ADD_VALUE:
+0000113C  1C1D                     130      MOVE.B  (A5)+, D6
+0000113E  0C06 0039                131      CMPI.B  #$39, D6
+00001142  6F00 0004                132      BLE     NUM_VALUE
+00001146  5F06                     133      SUBQ.B  #$07, D6
+00001148                           134  NUM_VALUE:
+00001148  0406 0030                135      SUB.B   #ZERO, D6
+0000114C  E99F                     136      ROL.L   #4, D7
+0000114E  DE86                     137      ADD.L   D6, D7
+00001150  5301                     138      SUB.B   #$01, D1
+00001152  0C01 0000                139      CMPI.B  #NULL, D1
+00001156  6F00 0004                140      BLE     RETURN_VALUE
+0000115A  60E0                     141      BRA     ADD_VALUE
+0000115C                           142  RETURN_VALUE:
+0000115C  4E75                     143      RTS
+0000115E                           144  
+0000115E                           145      
+0000115E                           146  
+0000115E                           147  * PSUEDOCODE:   
+0000115E                           148  * check if text in ?buffer? is equal to possible commands one by one
+0000115E                           149  * will be super long, but entirely copy-paste
+0000115E                           150  
+0000115E                           151  
+0000115E                           152  HELP:
+0000115E  43F9 0000161E            153      LEA     HELPTEXT,A1 ; load helptext into a1
+00001164  103C 000E                154      MOVE.B  #14,D0      ; display text
+00001168  4E4F                     155      TRAP    #15
+0000116A  6000 0248                156      BRA     RETURN
+0000116E                           157      
+0000116E                           158  MDSP:
+0000116E  45F9 00002300            159      LEA     OUTPUT, A2
+00001174  4BF9 00002100            160      LEA     BUFFER, A5
+0000117A  5A4D                     161      ADD     #$05, A5
+0000117C  4EB8 10FA                162      JSR     GET_ARG
+00001180  2447                     163      MOVE.L  D7, A2
+00001182  524D                     164      ADD     #$01, A5
+00001184  4EB8 10FA                165      JSR     GET_ARG
+00001188  2647                     166      MOVE.L  D7, A3
+0000118A  7200                     167      MOVEQ   #NULL, D1
+0000118C  43F9 00002100            168      LEA     BUFFER, A1
+00001192                           169      
+00001192                           170  NEW
+00001192  12BC 0000                171      MOVE.B  #$00,(A1)
+00001196  103C 000D                172      MOVE.B  #13,D0
+0000119A  4E4F                     173      TRAP    #15
+0000119C  4EB9 000011D6            174      JSR     DISP_ADDR
+000011A2  3C3C 0008                175      MOVE.W  #08,D6
+000011A6                           176      
+000011A6                           177  DISP_MEM
+000011A6  143C 0010                178      MOVE.B  #16, D2
+000011AA  B6CA                     179      CMPA    A2, A3
+000011AC  6700 001A                180      BEQ     END_DISP
+000011B0  121A                     181      MOVE.B  (A2)+, D1
+000011B2  103C 000F                182      MOVE.B  #15, D0
+000011B6  4E4F                     183      TRAP    #15
+000011B8  123C 0020                184      MOVE.B  #SPACE, D1
+000011BC  103C 0006                185      MOVE.B  #6, D0
+000011C0  4E4F                     186      TRAP    #15
+000011C2  5346                     187      SUB     #01, D6
+000011C4  67CC                     188      BEQ     NEW
+000011C6  60DE                     189      BRA     DISP_MEM
+000011C8                           190  
+000011C8                           191  END_DISP
+000011C8  123C 0000                192      MOVE.B  #NULL, D1
+000011CC  103C 0000                193      MOVE.B  #0, D0
+000011D0  4E4F                     194      TRAP    #15
+000011D2  4EF8 1058                195      JMP     PROMPT
+000011D6                           196  
+000011D6                           197  DISP_ADDR
+000011D6  123C 0024                198      MOVE.B  #$24, D1
+000011DA  303C 0006                199      MOVE    #6, D0
+000011DE  4E4F                     200      TRAP    #15
+000011E0  200A                     201      MOVE.L  A2, D0
+000011E2  43F9 00002300            202      LEA     OUTPUT, A1
+000011E8  343C 0008                203      MOVE.W  #8, D2
+000011EC                           204  DISP_ADDR_2
+000011EC  E998                     205      ROL.L   #4, D0
+000011EE  2600                     206      MOVE.L  D0, D3
+000011F0  C6BC 0000000F            207      AND.L   #$0F, D3
+000011F6  0C03 0009                208      CMPI.B  #$09, D3
+000011FA  6F00 0004                209      BLE     DISP_ADDR_3
+000011FE  5E43                     210      ADD     #$07, D3
+00001200                           211  DISP_ADDR_3
+00001200  0643 0030                212      ADD     #$30, D3
+00001204  12C3                     213      MOVE.B  D3, (A1)+
+00001206  5342                     214      SUBQ.W  #1, D2
+00001208  66E2                     215      BNE     DISP_ADDR_2
+0000120A  12FC 0000                216      MOVE.B  #NULL, (A1)+
+0000120E  43F9 00002300            217      LEA     OUTPUT, A1
+00001214  103C 000E                218      MOVE.B  #14, D0
+00001218  4E4F                     219      TRAP #15
+0000121A  123C 003A                220      MOVE.B  #$3A, D1
+0000121E  103C 0006                221      MOVE.B  #6, D0
+00001222  4E4F                     222      TRAP    #15
+00001224  4E75                     223      RTS
+00001226                           224  
+00001226                           225  
+00001226                           226  SORTW:
+00001226                           227  
+00001226                           228  MM:
+00001226  4BF8 1064                229      LEA     INPUT,A5
+0000122A  564D                     230      ADD     #$03,A5
+0000122C  4EB8 10FA                231      JSR     GET_ARG
+00001230  2447                     232      MOVE.L  D7,A2
+00001232                           233  MOD_LOOP:
+00001232  43F9 00002300            234      LEA     OUTPUT, A1
+00001238  4EB8 11D6                235      JSR     DISP_ADDR
+0000123C  103C 0002                236      MOVE.B  #2,D0
+00001240  4E4F                     237      TRAP    #15
+00001242  43F9 00002300            238      LEA     OUTPUT,A1
+00001248  0C11 002E                239      CMPI.B  #$2E,(A1)
+0000124C  6700 0014                240      BEQ     DONE_MOD
+00001250  0C01 0002                241      CMPI.B  #2,D1
+00001254                           242      ;BNE        ARG_ERR
+00001254  4BF9 00002300            243      LEA     OUTPUT, A5
+0000125A  4EB8 1138                244      JSR     GET_VALUE
+0000125E  14C7                     245      MOVE.B  D7,(A2)+
+00001260  60D0                     246      BRA     MOD_LOOP
+00001262                           247  
+00001262                           248  DONE_MOD:
+00001262  6000 0150                249      BRA     RETURN
+00001266                           250  
+00001266                           251  MS:
+00001266                           252  
+00001266                           253  BF:
+00001266  4BF9 00002100            254      LEA     BUFFER, A5
+0000126C  564D                     255      ADD     #$03, A5
+0000126E  4EB8 10FA                256      JSR     GET_ARG
+00001272  2447                     257      MOVE.L  D7, A2
+00001274  524D                     258      ADD     #$01, A5
+00001276  4EB8 10FA                259      JSR     GET_ARG
+0000127A  2647                     260      MOVE.L  D7, A3
+0000127C  7200                     261      MOVEQ   #00, D1
+0000127E  2C4D                     262      MOVE.L  A5, A6
+00001280  524E                     263      ADD     #01, A6
+00001282                           264      
+00001282                           265  GET_LENGTH:
+00001282  5241                     266      ADD     #01, D1
+00001284  0C1E 0000                267      CMPI.B  #NULL, (A6)+
+00001288  66F8                     268      BNE     GET_LENGTH
+0000128A  0C01 0005                269      CMPI.B  #05, D1
+0000128E                           270      ;BNE        ARG_ERR        
+0000128E  4EB8 1138                271      JSR     GET_VALUE    ;D7 NOW STORES THE WORD WE WANT TO FILL
+00001292                           272      
+00001292                           273  FILL_MEM:
+00001292  B4CB                     274      CMPA    A3, A2
+00001294  6C00 0006                275      BGE     DONE_FILL
+00001298  34C7                     276      MOVE.W  D7, (A2)+
+0000129A  60F6                     277      BRA     FILL_MEM
+0000129C                           278  
+0000129C                           279  DONE_FILL:
+0000129C  123C 0000                280      MOVE.B  #NULL, D1
+000012A0  103C 0000                281      MOVE.B  #0, D0
+000012A4  4E4F                     282      TRAP    #15
+000012A6  4EF8 1058                283      JMP     PROMPT
+000012AA                           284  
+000012AA                           285  BMOV:
+000012AA  4BF9 00002100            286      LEA     BUFFER,A5
+000012B0  5A4D                     287      ADD     #05,A5
+000012B2  4EB8 10FA                288      JSR     GET_ARG
+000012B6  2447                     289      MOVE.L  D7,A2
+000012B8  524D                     290      ADD     #01,A5
+000012BA  4EB8 10FA                291      JSR     GET_ARG
+000012BE  2647                     292      MOVE.L  D7,A3
+000012C0  524D                     293      ADD     #01,A5
+000012C2  4EB8 10FA                294      JSR     GET_ARG
+000012C6  2847                     295      MOVE.L  D7,A4
+000012C8                           296  MOVE_MEM:
+000012C8  B4CB                     297      CMPA    A3,A2
+000012CA  6C00 0006                298      BGE     DONE_MOVE
+000012CE  38DA                     299      MOVE.W  (A2)+,(A4)+
+000012D0  60F6                     300      BRA     MOVE_MEM
+000012D2                           301      
+000012D2                           302  DONE_MOVE
+000012D2  123C 0000                303      MOVE.B  #NULL,D1
+000012D6  103C 0000                304      MOVE.B  #0,D0
+000012DA  4E4F                     305      TRAP    #15
+000012DC  4EF9 000013B4            306      JMP     RETURN
+000012E2                           307  
+000012E2                           308  
+000012E2                           309  BTST:
+000012E2  45F9 00002300            310      LEA     OUTPUT, A2
+000012E8  4BF9 00002100            311      LEA     BUFFER, A5
+000012EE  5A4D                     312      ADD     #$05, A5
+000012F0  4EB8 10FA                313      JSR     GET_ARG
+000012F4  2447                     314      MOVE.L  D7, A2
+000012F6  524D                     315      ADD     #$01, A5
+000012F8  4EB8 10FA                316      JSR     GET_ARG
+000012FC  2647                     317      MOVE.L  D7, A3
+000012FE  2A4A                     318      MOVE.L  A2, A5      ;STORE COPY OF START LOCATION
+00001300                           319  WRITE_TEST
+00001300  B6CA                     320      CMPA    A2, A3
+00001302  6D00 0008                321      BLT     DONE_WRITE
+00001306  34FC AAAA                322      MOVE.W  #$AAAA, (A2)+
+0000130A  60F4                     323      BRA     WRITE_TEST
+0000130C                           324  DONE_WRITE
+0000130C  244D                     325      MOVE.L  A5, A2
+0000130E                           326  READ_TEST
+0000130E  0C52 AAAA                327      CMP.W   #$AAAA, (A2)
+00001312  6600 002E                328      BNE     MEM_ERR
+00001316  34FC AAAA                329      MOVE.W  #$AAAA, (A2)+
+0000131A  B6CA                     330      CMPA    A2, A3
+0000131C  6EF0                     331      BGT     READ_TEST
+0000131E                           332      
+0000131E  244D                     333      MOVE.L  A5, A2
+00001320                           334  TEST
+00001320  0C52 AAAA                335      CMP.W   #$AAAA, (A2)
+00001324  6600 001C                336      BNE     MEM_ERR
+00001328  34FC 0000                337      MOVE.W  #$0000, (A2)+
+0000132C  B6CA                     338      CMPA    A2, A3
+0000132E  6EF0                     339      BGT     TEST
+00001330  43F9 000019CF            340      LEA     GOOD, A1
+00001336  103C 000E                341      MOVE.B  #14, D0
+0000133A  4E4F                     342      TRAP    #15
+0000133C                           343  
+0000133C                           344      
+0000133C  4EF9 000013B4            345      JMP     RETURN
+00001342                           346  
+00001342                           347  MEM_ERR
+00001342  43F9 000019AA            348      LEA     MEM_ERR_STR, A1
+00001348  103C 000D                349      MOVE.B  #13, D0
+0000134C  4E4F                     350      TRAP    #15
+0000134E  4EF9 000013B4            351      JMP     RETURN
+00001354                           352  
+00001354                           353  BSCH:
+00001354                           354  
+00001354                           355  GO: 
+00001354  4BF9 00002100            356      LEA     BUFFER,A5
+0000135A  564D                     357      ADD     #$03,A5
+0000135C  4EB8 10FA                358      JSR     GET_ARG
+00001360  43F9 00002300            359      LEA     OUTPUT,A1
+00001366  2247                     360      MOVE.L  D7,A1       ; moves GO's arg into A7
+00001368  4ED1                     361      JMP     (A1)        ; branch to location to run that program
+0000136A  6000 0048                362      BRA     RETURN
+0000136E                           363      
+0000136E                           364  DF:
+0000136E  4EB9 0000149E            365      JSR     REG
+00001374                           366      
+00001374  6000 003E                367      BRA     RETURN
+00001378                           368      
+00001378                           369      
+00001378                           370  RESET:
+00001378  247C 00000000            371      MOVE.L  #NULL,A2
+0000137E  267C 00000FFF            372      MOVE.L  #$00000FFF,A3
+00001384  7EFF                     373      MOVE.L  #$FFFFFFFF,D7
+00001386                           374      
+00001386  4EF8 1292                375      JMP     FILL_MEM
+0000138A                           376      
+0000138A  7EFF                     377      MOVE.L  #$FFFFFFFF,D7
+0000138C  247C 00002000            378      MOVE.L  #$2000,A2
+00001392  267C 00003000            379      MOVE.L  #$3000,A3
+00001398                           380      
+00001398  4EF8 1292                381      JMP     FILL_MEM
+0000139C                           382      
+0000139C  4280                     383      CLR.L   D0
+0000139E  4281                     384      CLR.L   D1
+000013A0  4282                     385      CLR.L   D2
+000013A2  4283                     386      CLR.L   D3
+000013A4  4284                     387      CLR.L   D4
+000013A6  4285                     388      CLR.L   D5
+000013A8  4286                     389      CLR.L   D6
+000013AA  4287                     390      CLR.L   D7
+000013AC                           391      
+000013AC  6000 0006                392      BRA     RETURN
+000013B0                           393  
+000013B0                           394  EXIT:
+000013B0  6000 0044                395      BRA     DONE
+000013B4                           396      
+000013B4                           397  RETURN:
+000013B4                           398      ;MOVE.B  #14,D0      ; go back to monitor
+000013B4                           399      ;TRAP    #15
+000013B4  6000 FCA2                400      BRA     PROMPT
+000013B8                           401  
+000013B8                           402  EMPTY:
+000013B8  43F9 00001868            403      LEA     EMPTY_STR,A1   
+000013BE  103C 000E                404      MOVE.B  #14,D0         
+000013C2  4E4F                     405      TRAP    #15
+000013C4  60EE                     406      BRA     RETURN
+000013C6                           407      
+000013C6                           408  CMD_ERROR:
+000013C6  4EB9 00001420            409      JSR     ILL_INST
+000013CC  43F9 00001880            410      LEA     CMD_ERR_STR,A1
+000013D2  103C 000E                411      MOVE.B  #14,D0         
+000013D6  4E4F                     412      TRAP    #15
+000013D8  60DA                     413      BRA     RETURN
+000013DA                           414      
+000013DA                           415  HEX_ERROR:
+000013DA  43F9 0000188C            416      LEA     HEX_ERR_STR,A1 
+000013E0  103C 000E                417      MOVE.B  #14,D0         
+000013E4  4E4F                     418      TRAP    #15
+000013E6  60CC                     419      BRA     RETURN
+000013E8                           420      
+000013E8                           421  ARG_ERROR:
+000013E8  43F9 000018C1            422      LEA     ARG_ERR_STR,A1 
+000013EE  103C 000E                423      MOVE.B  #14,D0         
+000013F2  4E4F                     424      TRAP    #15
+000013F4  60BE                     425      BRA     RETURN
+000013F6                           426  
+000013F6                           427  DONE:
+000013F6  103C 0009                428      MOVE.B  #9,D0
+000013FA  4E4F                     429      TRAP    #15         ; halt simulator
+000013FC                           430      
+000013FC                           431      
+000013FC                           432      
+000013FC                           433  BUS_ERR:
+000013FC  43F9 00001919            434      LEA     BUS_ERR_STR, A1
+00001402  103C 000D                435      MOVE.B  #13, D0
+00001406  4E4F                     436      TRAP    #15
+00001408  4EF9 0000149E            437      JMP     REG
+0000140E                           438  
+0000140E                           439  ADDR_ERR:
+0000140E  43F9 00001925            440      LEA     ADDR_ERR_STR, A1
+00001414  103C 000D                441      MOVE.B  #13, D0
+00001418  4E4F                     442      TRAP    #15
+0000141A  4EF9 0000149E            443      JMP     REG
+00001420                           444  
+00001420                           445  ILL_INST:
+00001420  43F9 00001935            446      LEA     ILL_INST_STR, A1
+00001426  103C 000D                447      MOVE.B  #13, D0
+0000142A  4E4F                     448      TRAP    #15
+0000142C  4EF9 0000149E            449      JMP     REG
+00001432                           450  
+00001432                           451  DIV_ZERO:
+00001432  43F9 0000194D            452      LEA     DIV0_ERR_STR, A1
+00001438  103C 000D                453      MOVE.B  #13, D0
+0000143C  4E4F                     454      TRAP    #15
+0000143E  4EF9 0000149E            455      JMP     REG
+00001444                           456  
+00001444                           457  PRIV_VIOL:
+00001444  43F9 00001964            458      LEA     PRIV_VIOL_STR, A1
+0000144A  103C 000D                459      MOVE.B  #13, D0
+0000144E  4E4F                     460      TRAP    #15
+00001450  4EF9 0000149E            461      JMP     REG
+00001456                           462  
+00001456                           463  TRACE:
+00001456  43F9 00001978            464      LEA     TRACE_STR,A1
+0000145C  103C 000D                465      MOVE.B  #13,D0
+00001460  4E4F                     466      TRAP    #15
+00001462  4EF9 0000149E            467      JMP     REG
+00001468                           468  CHK_INST:
+00001468  43F9 000019BF            469      LEA     CHK_ERR_STR,A1
+0000146E  103C 000D                470      MOVE.B  #13,D0
+00001472  4E4F                     471      TRAP    #15
+00001474  4EF9 0000149E            472      JMP     REG
+0000147A                           473  
+0000147A                           474  LINE_A:
+0000147A  43F9 00001988            475      LEA     LINE_A_STR,A1
+00001480  103C 000D                476      MOVE.B  #13,D0
+00001484  4E4F                     477      TRAP    #15
+00001486  4EF9 0000149E            478      JMP     REG
+0000148C                           479  
+0000148C                           480  LINE_F:
+0000148C  43F9 00001999            481      LEA     LINE_F_STR,A1
+00001492  103C 000D                482      MOVE.B  #13,D0
+00001496  4E4F                     483      TRAP    #15
+00001498  4EF9 0000149E            484      JMP     REG
+0000149E                           485      
+0000149E                           486  REG:
+0000149E  4FF9 00003000            487      LEA     STACK,A7
+000014A4  48E7 FFFF                488      MOVEM.L D0-D7/A0-A7,-(A7)
+000014A8  7A00                     489      MOVEQ   #00,D5
+000014AA                           490      
+000014AA                           491  NXT_REG:
+000014AA  43F9 000018E9            492      LEA     RGSTR_STR,A1
+000014B0  D2C5                     493      ADD     D5,A1
+000014B2  5645                     494      ADD     #$03,D5
+000014B4  323C 0003                495      MOVE.W  #03,D1
+000014B8  103C 0001                496      MOVE.B  #01,D0
+000014BC  4E4F                     497      TRAP    #15
+000014BE  43F9 00002300            498      LEA     OUTPUT,A1
+000014C4  343C 0008                499      MOVE.W  #8, D2
+000014C8  201F                     500      MOVE.L  (A7)+,D0
+000014CA                           501      
+000014CA                           502  NXT_DIG:
+000014CA  E998                     503      ROL.L   #4,D0
+000014CC  2600                     504      MOVE.L  D0,D3
+000014CE  C6BC 0000000F            505      AND.L   #$0F,D3
+000014D4  0C03 0009                506      CMPI.B  #$09,D3
+000014D8  6F00 0004                507      BLE     LESS
+000014DC  5E43                     508      ADD     #$07,D3
+000014DE                           509  LESS:
+000014DE  0643 0030                510      ADD     #$30,D3
+000014E2  12C3                     511      MOVE.B  D3,(A1)+
+000014E4  5342                     512      SUBQ.W  #1,D2
+000014E6  66E2                     513      BNE     NXT_DIG
+000014E8                           514      
+000014E8  12FC 0000                515      MOVE.B  #$00,(A1)+
+000014EC  43F9 00002300            516      LEA     OUTPUT,A1
+000014F2  103C 000D                517      MOVE.B  #13,D0
+000014F6  4E4F                     518      TRAP    #15
+000014F8  BEFC 3000                519      CMPA    #STACK,A7
+000014FC  6DAC                     520      BLT     NXT_REG   
+000014FE                           521      
+000014FE                           522  SR:
+000014FE  4FF9 00003000            523      LEA     STACK,A7
+00001504  40E7                     524      MOVE    SR,-(A7)
+00001506  43F9 000019CB            525      LEA     SR_STR,A1
+0000150C  103C 000E                526      MOVE.B  #14,D0
+00001510  4E4F                     527      TRAP    #15
+00001512  43F9 00002300            528      LEA     OUTPUT,A1
+00001518  343C 0004                529      MOVE.W  #4,D2
+0000151C  201F                     530      MOVE.L  (A7)+,D0
+0000151E                           531  NXT_SR:
+0000151E  E998                     532      ROL.L   #4,D0
+00001520  2600                     533      MOVE.L  D0,D3
+00001522  C6BC 0000000F            534      AND.L   #$0F,D3
+00001528  0C03 0009                535      CMPI.B  #$09,D3
+0000152C  6F00 0004                536      BLE     LESS_SR
+00001530  5E43                     537      ADD     #$07,D3
+00001532                           538  LESS_SR:
+00001532  0643 0030                539      ADD     #$30,D3
+00001536  12C3                     540      MOVE.B  D3,(A1)+
+00001538  5342                     541      SUBQ.W  #1,D2
+0000153A  66E2                     542      BNE     NXT_SR
+0000153C  12FC 0000                543      MOVE.B  #$00,(A1)+
+00001540  43F9 00002300            544      LEA     OUTPUT,A1
+00001546  103C 000D                545      MOVE.B  #13,D0
+0000154A  4E4F                     546      TRAP    #15
+0000154C  4EF8 1058                547      JMP     PROMPT
+00001550                           548  
+00001550                           549  
+00001550                           550  SWAP:
+00001550  4BF8 1064                551      LEA     INPUT,A5
+00001554  5A4D                     552      ADD     #05,A5
+00001556  4EB8 10FA                553      JSR     GET_ARG
+0000155A  2447                     554      MOVE.L  D7,A2
+0000155C  524D                     555      ADD     #01,A5
+0000155E  4EB8 10FA                556      JSR     GET_ARG
+00001562  2647                     557      MOVE.L  D7,A3
+00001564  524D                     558      ADD     #01,A5
+00001566  6700 0008                559      BEQ     SWAP_BYTE
+0000156A  4EF9 000018C1            560      JMP     ARG_ERR_STR
+00001570                           561      
+00001570                           562  SWAP_BYTE:
+00001570  1212                     563      MOVE.B  (A2),D1
+00001572  1493                     564      MOVE.B  (A3),(A2)
+00001574  1681                     565      MOVE.B  D1,(A3)
+00001576  6000 FE3C                566      BRA     RETURN
+0000157A                           567  
+0000157A                           568  
+0000157A                           569  DIVZ:
+0000157A  4280                     570      CLR.L   D0
+0000157C  4281                     571      CLR.L   D1
+0000157E  82C0                     572      DIVU    D0,D1
+00001580  6000 FE32                573      BRA RETURN
+00001584                           574  
+00001584                           575      
+00001584                           576      
+00001584                           577  
+00001584  FFFF FFFF                578      SIMHALT             ; halt simulator
+00001588                           579  
+00001588                           580  * Put variables and constants here
+00001588                           581  
+00001588= 4D 4F 4E 49 54 4F ...    582  MONITOR     DC.B    'MONITOR441> ',0                        ; command prompt input message
+00001595  =00002100                583  BUFFER      EQU     $2100                                   ; input string storage
+00001595  =00002200                584  CMD_BUFFER  EQU     $2200
+00001595  =00002300                585  OUTPUT      EQU     $2300
+00001595  =0000000D                586  CR          EQU     $0D                                     ; ascii code for carriage return
+00001595  =0000000A                587  LF          EQU     $0A                                     ; ascii code for line feed
+00001595= 48 45 4C 50 20 00        588  CMD_TBL     DC.B    'HELP ',0
+0000159B= 4D 44 53 50 20 00        589              DC.B    'MDSP ',0
+000015A1= 53 4F 52 54 57 20 00     590              DC.B    'SORTW ',0
+000015A8= 53 57 41 50 20 00        591              DC.B    'SWAP ',0
+000015AE= 4D 4D 20 00              592              DC.B    'MM ',0
+000015B2= 4D 53 20 00              593              DC.B    'MS ',0
+000015B6= 42 46 20 00              594              DC.B    'BF ',0
+000015BA= 42 4D 4F 56 20 00        595              DC.B    'BMOV ',0
+000015C0= 42 54 53 54 20 00        596              DC.B    'BTST ',0
+000015C6= 42 53 43 48 20 00        597              DC.B    'BSCH ',0
+000015CC= 47 4F 20 00              598              DC.B    'GO ',0
+000015D0= 44 46 20 00              599              DC.B    'DF ',0
+000015D4= 52 45 53 45 54 20 00     600              DC.B    'RESET ',0
+000015DB= 44 49 56 5A 20 00        601              DC.B    'DIVZ ',0
+000015E2= 0000115E                 602  CMD_ADDR    DC.L    HELP
+000015E6= 0000116E                 603              DC.L    MDSP
+000015EA= 00001226                 604              DC.L    SORTW
+000015EE= 00001550                 605              DC.L    SWAP
+000015F2= 00001226                 606              DC.L    MM
+000015F6= 00001266                 607              DC.L    MS
+000015FA= 00001266                 608              DC.L    BF
+000015FE= 000012AA                 609              DC.L    BMOV
+00001602= 000012E2                 610              DC.L    BTST
+00001606= 00001354                 611              DC.L    BSCH
+0000160A= 00001354                 612              DC.L    GO
+0000160E= 0000136E                 613              DC.L    DF
+00001612= 00001378                 614              DC.L    RESET
+00001616= 000013B0                 615              DC.L    EXIT
+0000161A= 0000157A                 616              DC.L    DIVZ
+0000161E= 4D 44 53 50 09 20 ...    617  HELPTEXT    DC.B    'MDSP      Memory Display (MDSP $ONE $TWO) or (MDSP $ONE)',CR,LF        ; ascii string with new line
+00001656= 53 4F 52 54 57 20 ...    618              DC.B    'SORTW       Sort (SORTW $START $END)',CR,LF
+0000167C= 4D 4D 09 09 4D 65 ...    619              DC.B    'MM     Memory Modify (MM $ADDRESS) then ($DATA) until (.)',CR,LF
+000016B4= 4D 53 09 09 4D 65 ...    620              DC.B    'MS     Memory Set (MS $ADDRESS DATA)',CR,LF
+000016D7= 42 46 09 09 42 6C ...    621              DC.B    'BF     Block Fill (BF $START $END ####)',CR,LF
+000016FD= 42 4D 4F 56 09 20 ...    622              DC.B    'BMOV      Block Move (BMOV $ONE $TWO)',CR,LF
+00001722= 42 54 53 54 09 20 ...    623              DC.B    'BTST      Block Test (BTST $ONE TWO)',CR,LF
+00001746= 42 53 43 48 20 20 ...    624              DC.B    'BSCH      Block Search (BSCH $ONE TWO)',CR,LF
+0000176E= 47 4F 09 09 45 78 ...    625              DC.B    'GO     Execute Program (GO $ADDRESS)',CR,LF
+00001791= 44 46 09 09 44 69 ...    626              DC.B    'DF     Display Formatted Registers (DF)',CR,LF
+000017B7= 53 57 41 50 09 20 ...    627              DC.B    'SWAP      Swap the data of two registers(SWAP $ONE $TWO)',CR,LF
+000017EF= 52 45 53 45 54 20 ...    628              DC.B    'RESET      Clears nonoperative registers to origional state (RESET )',CR,LF
+00001835= 45 58 49 54 09 20 ...    629              DC.B    'EXIT      Exit Monitor Program (EXIT)',CR,LF
+0000185A= 00                       630              DC.B    '',0
+0000185B= 48 45 4C 50 00           631  HELP_COMP   DC.B    'HELP',0
+00001860= 45 58 49 54 00           632  EXIT_COMP   DC.B    'EXIT',0
+00001865= 3F 20 00                 633  Q_MARK      DC.B    '? ',0
+00001868= 59 4F 55 20 48 41 ...    634  EMPTY_STR   DC.B    'YOU HAD AN EMPTY STRING',0
+00001880= 4E 4F 54 20 56 41 ...    635  CMD_ERR_STR DC.B    'NOT VALID',CR,LF
+0000188B= 00                       636              DC.B    '',0
+0000188C= 4E 45 45 44 53 20 ...    637  HEX_ERR_STR DC.B    'NEEDS TO BE A HEXADECIMAL NUMBER. BEGIN ARG WITH "$"',0
+000018C1= 41 52 47 55 4D 45 ...    638  ARG_ERR_STR DC.B    'ARGUMENT ERROR. LIKELY A NON HEX NUMBER',0
+000018E9  =00000020                639  SPACE       EQU     $20
+000018E9  =00000000                640  NULL        EQU     $00
+000018E9  =00000004                641  EOT         EQU     $04
+000018E9  =00000024                642  HEX         EQU     $24
+000018E9  =00000030                643  ZERO        EQU     $30
+000018E9  =0000003B                644  SEMICOLON   EQU     $3B
+000018E9  =00003000                645  STACK       EQU     $3000
+000018E9= 44 30 3D 44 31 3D ...    646  RGSTR_STR   DC.B    'D0=D1=D2=D3=D4=D5=D6=D7=A0=A1=A2=A3=A4=A5=A6=A7='
+00001919= 42 55 53 20 45 52 ...    647  BUS_ERR_STR DC.B    'BUS ERROR',$0A,$0D,0
+00001925                           648  ADDR_ERR_STR
+00001925= 41 44 44 52 45 53 ...    649              DC.B    'ADDRESS ERROR',LF,CR,0    
+00001935                           650  ILL_INST_STR
+00001935= 4E 4F 54 20 56 41 ...    651              DC.B    'NOT VALID INSTRUCTION',LF,CR,0
+0000194D                           652  DIV0_ERR_STR
+0000194D= 44 49 56 49 44 45 ...    653              DC.B    'DIVIDE BY ZERO ERROR',LF,CR,0
+00001964                           654  PRIV_VIOL_STR
+00001964= 50 52 49 56 49 4C ...    655              DC.B    'PRIVILEGE VIOLATION',0
+00001978= 54 52 41 43 45 20 ...    656  TRACE_STR   DC.B    'TRACE EXCEPTION',0
+00001988= 4C 49 4E 45 20 41 ...    657  LINE_A_STR  DC.B    'LINE A EXCEPTION',0
+00001999= 4C 49 4E 45 20 46 ...    658  LINE_F_STR  DC.B    'LINE F EXCEPTION',0
+000019AA= 45 52 52 4F 52 20 ...    659  MEM_ERR_STR DC.B    'ERROR IN MEMORY AT: ',0
+000019BF= 43 48 45 43 4B 20 ...    660  CHK_ERR_STR DC.B    'CHECK ERROR',0
+000019CB= 53 52 3D 00              661  SR_STR      DC.B    'SR=',0
+000019CF= 4E 4F 20 45 52 52 ...    662  GOOD        DC.B    'NO ERROR DETECTED',LF,CR,0
+000019E3                           663  
+000019E3                           664      END    START        ; last line of source
 
 No errors detected
 No warnings generated
@@ -686,114 +674,114 @@ No warnings generated
 SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
-ADDR_ERR            13FA
-ADDR_ERR_STR        1939
-ADD_VALUE           1134
-ARG_ERROR           13D4
-ARG_ERR_STR         18D5
-BF                  125E
-BMOV                12A2
-BSCH                134C
-BTST                12DA
+ADDR_ERR            140E
+ADDR_ERR_STR        1925
+ADD_VALUE           113C
+ARG_ERROR           13E8
+ARG_ERR_STR         18C1
+BF                  1266
+BMOV                12AA
+BSCH                1354
+BTST                12E2
 BUFFER              2100
-BUS_ERR             13E8
-BUS_ERR_STR         192D
-CLR_SPACE           107A
-CMD_ADDR            15E4
+BUS_ERR             13FC
+BUS_ERR_STR         1919
+CHK_ERR_STR         19BF
+CHK_INST            1468
+CLEAR_SPACE         1082
+CMD_ADDR            15E2
 CMD_BUFFER          2200
-CMD_ERROR           13BE
-CMD_ERR_STR         1894
-CMD_TBL             1597
-COPY_CMD            108A
+CMD_ERROR           13C6
+CMD_ERR_STR         1880
+CMD_TBL             1595
+COPY_CMD            1092
 CR                  D
-DF                  1366
-DIGIT               1110
-DISP_ADDR           11CE
-DISP_ADDR_2         11E4
-DISP_ADDR_3         11F8
-DISP_MEM            119E
-DIV0_ERR_STR        1961
-DIVZ                157C
-DIV_ZERO            141E
-DONE                13E2
-DONE_FILL           1294
-DONE_MOD            125A
-DONE_MOVE           12CA
-DONE_WRITE          1304
-EMPTY               13B0
-EMPTY_STR           187C
-END_DISP            11C0
+DF                  136E
+DIGIT               1118
+DISP_ADDR           11D6
+DISP_ADDR_2         11EC
+DISP_ADDR_3         1200
+DISP_MEM            11A6
+DIV0_ERR_STR        194D
+DIVZ                157A
+DIV_ZERO            1432
+DONE                13F6
+DONE_FILL           129C
+DONE_MOD            1262
+DONE_MOVE           12D2
+DONE_WRITE          130C
+EMPTY               13B8
+EMPTY_STR           1868
+END_DISP            11C8
 EOT                 4
-EXIT                13A8
-EXIT_COMP           1874
-FILL_MEM            128A
-GET_ARG             10F2
-GET_ARG_LOOP        10FE
-GET_CMD             10A8
-GET_CMD_LOOP        10BE
-GET_LENGTH          127A
-GET_VALUE           1130
-GO                  134C
-GOOD                19D7
-HELP                1156
-HELPTEXT            1620
-HELP_COMP           186F
+EXIT                13B0
+EXIT_COMP           1860
+FILL_MEM            1292
+GET_ARG             10FA
+GET_ARG_LOOP        1106
+GET_CMD             10B0
+GET_CMD_LOOP        10C6
+GET_LENGTH          1282
+GET_VALUE           1138
+GO                  1354
+GOOD                19CF
+HELP                115E
+HELPTEXT            161E
+HELP_COMP           185B
 HEX                 24
-HEX_ERROR           13C6
-HEX_ERR_STR         18A0
-ILL_INST            140C
-ILL_INST_STR        1949
+HEX_ERROR           13DA
+HEX_ERR_STR         188C
+ILL_INST            1420
+ILL_INST_STR        1935
 INIT                1010
-INPUT               105C
-LESS                14B8
-LESS_SR             150C
+INPUT               1064
+LESS                14DE
+LESS_SR             1532
 LF                  A
-LINE_A              1454
-LINE_A_STR          199C
-LINE_F              1466
-LINE_F_STR          19AD
-MDSP                1166
-MEM_ERR             133A
-MEM_ERR_STR         19BE
-MM                  121E
-MOD_LOOP            122A
-MONITOR             158A
-MOVE_MEM            12C0
-MS                  125E
-NEW                 118A
-NEXT                10D6
-NEXT_LOOP           10DC
+LINE_A              147A
+LINE_A_STR          1988
+LINE_F              148C
+LINE_F_STR          1999
+MDSP                116E
+MEM_ERR             1342
+MEM_ERR_STR         19AA
+MM                  1226
+MOD_LOOP            1232
+MONITOR             1588
+MOVE_MEM            12C8
+MS                  1266
+NEW                 1192
+NEXT                10DE
+NEXT_LOOP           10E4
 NULL                0
-NUM_VALUE           1140
-NXT_DIG             14A4
-NXT_REG             1484
-NXT_SR              14F8
+NUM_VALUE           1148
+NXT_DIG             14CA
+NXT_REG             14AA
+NXT_SR              151E
 OUTPUT              2300
-PARSE               1070
-PRIV_VIOL           1430
-PRIV_VIOL_STR       1978
-PROMPT              1050
-Q_MARK              1879
-READ_TEST           1306
-REG                 1478
-RESET               1370
-RETURN              13AC
-RETURN_ARG          112E
-RETURN_VALUE        1154
-RGSTR_STR           18FD
+PARSE               1078
+PRIV_VIOL           1444
+PRIV_VIOL_STR       1964
+PROMPT              1058
+Q_MARK              1865
+READ_TEST           130E
+REG                 149E
+RESET               1378
+RETURN              13B4
+RETURN_ARG          1136
+RETURN_VALUE        115C
+RGSTR_STR           18E9
 SEMICOLON           3B
-SORTW               121E
+SORTW               1226
 SPACE               20
-SR                  14D8
-SR_STR              19D3
+SR                  14FE
+SR_STR              19CB
 STACK               3000
 START               1000
-SWAP                152A
-SWAP_BYTE           155E
-SWAP_LONG           1572
-SWAP_WORD           1568
-TEST                1318
-TRACE               1442
-TRACE_STR           198C
-WRITE_TEST          12F8
+SWAP                1550
+SWAP_BYTE           1570
+TEST                1320
+TRACE               1456
+TRACE_STR           1978
+WRITE_TEST          1300
 ZERO                30
